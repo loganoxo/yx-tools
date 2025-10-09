@@ -205,6 +205,7 @@ def download_file(url, filename):
     """下载文件"""
     print(f"正在下载: {url}")
     try:
+        # 尝试使用 requests 下载
         response = requests.get(url, stream=True, timeout=60)
         response.raise_for_status()
         
@@ -216,7 +217,23 @@ def download_file(url, filename):
         return True
     except Exception as e:
         print(f"下载失败: {e}")
-        return False
+        
+        # 如果是 SSL 错误，尝试使用 urllib
+        if "SSL" in str(e) or "ssl" in str(e).lower():
+            print("检测到 SSL 问题，尝试使用备用下载方法...")
+            try:
+                import urllib.request
+                import urllib.error
+                
+                print(f"使用 urllib 下载: {url}")
+                urllib.request.urlretrieve(url, filename)
+                print(f"下载完成: {filename}")
+                return True
+            except Exception as urllib_e:
+                print(f"urllib 下载也失败: {urllib_e}")
+                return False
+        else:
+            return False
 
 
 def download_cloudflare_speedtest(os_type, arch_type):
@@ -233,8 +250,27 @@ def download_cloudflare_speedtest(os_type, arch_type):
     download_url = f"https://github.com/{GITHUB_REPO}/releases/download/{GITHUB_VERSION}/{exec_name}"
     
     if not download_file(download_url, exec_name):
-        print("下载失败，请检查网络连接或手动下载")
-        sys.exit(1)
+        print("下载失败，尝试备用方案...")
+        
+        # 备用方案1: 尝试 HTTP 下载
+        http_url = download_url.replace("https://", "http://")
+        print(f"尝试 HTTP 下载: {http_url}")
+        if download_file(http_url, exec_name):
+            print("HTTP 下载成功")
+        else:
+            # 备用方案2: 提供手动下载说明
+            print("\n" + "="*60)
+            print("自动下载失败，请手动下载 CloudflareSpeedTest:")
+            print(f"下载地址: {download_url}")
+            print(f"保存为: {exec_name}")
+            print("="*60)
+            
+            # 检查是否有手动下载的文件
+            if os.path.exists(exec_name):
+                print(f"找到手动下载的文件: {exec_name}")
+            else:
+                print("未找到 CloudflareSpeedTest 文件，程序无法继续")
+                sys.exit(1)
     
     # 在Unix系统上赋予执行权限
     if os_type != "win":

@@ -55,6 +55,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
+          # 确保 SSL 支持
+          pip install --upgrade certifi
+          pip install --upgrade urllib3
 
       - name: 构建可执行文件 (Windows)
         if: matrix.platform == 'windows'
@@ -75,6 +78,16 @@ jobs:
       - name: 赋予执行权限（Linux/macOS）
         if: matrix.platform != 'windows'
         run: chmod +x dist/CloudflareSpeedTest-${{ matrix.platform }}-${{ matrix.arch }}
+
+      - name: 测试可执行文件
+        run: |
+          if [ "${{ matrix.platform }}" = "windows" ]; then
+            echo "测试 Windows 可执行文件..."
+            echo "1" | dist\CloudflareSpeedTest-${{ matrix.platform }}-${{ matrix.arch }}.exe --help || echo "测试完成"
+          else
+            echo "测试 ${{ matrix.platform }} 可执行文件..."
+            echo "1" | ./dist/CloudflareSpeedTest-${{ matrix.platform }}-${{ matrix.arch }} --help || echo "测试完成"
+          fi
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4

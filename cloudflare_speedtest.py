@@ -202,10 +202,11 @@ def get_executable_name(os_type, arch_type):
 
 
 def download_file(url, filename):
-    """下载文件"""
+    """下载文件 - 支持多种下载方法"""
     print(f"正在下载: {url}")
+    
+    # 方法1: 尝试使用 requests
     try:
-        # 尝试使用 requests 下载
         response = requests.get(url, stream=True, timeout=60)
         response.raise_for_status()
         
@@ -213,27 +214,93 @@ def download_file(url, filename):
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
         
-        print(f"下载完成: {filename}")
+        print(f"✅ requests 下载完成: {filename}")
         return True
     except Exception as e:
-        print(f"下载失败: {e}")
+        print(f"❌ requests 下载失败: {e}")
+    
+    # 方法2: 尝试使用 wget
+    try:
+        print("🔄 尝试使用 wget 下载...")
+        result = subprocess.run([
+            "wget", "-O", filename, url
+        ], capture_output=True, text=True, timeout=60)
         
-        # 如果是 SSL 错误，尝试使用 urllib
-        if "SSL" in str(e) or "ssl" in str(e).lower():
-            print("检测到 SSL 问题，尝试使用备用下载方法...")
-            try:
-                import urllib.request
-                import urllib.error
-                
-                print(f"使用 urllib 下载: {url}")
-                urllib.request.urlretrieve(url, filename)
-                print(f"下载完成: {filename}")
-                return True
-            except Exception as urllib_e:
-                print(f"urllib 下载也失败: {urllib_e}")
-                return False
+        if result.returncode == 0 and os.path.exists(filename):
+            print(f"✅ wget 下载完成: {filename}")
+            return True
         else:
-            return False
+            print(f"❌ wget 下载失败: {result.stderr}")
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        print(f"❌ wget 不可用: {e}")
+    except Exception as e:
+        print(f"❌ wget 执行失败: {e}")
+    
+    # 方法3: 尝试使用 curl
+    try:
+        print("🔄 尝试使用 curl 下载...")
+        result = subprocess.run([
+            "curl", "-L", "-o", filename, url
+        ], capture_output=True, text=True, timeout=60)
+        
+        if result.returncode == 0 and os.path.exists(filename):
+            print(f"✅ curl 下载完成: {filename}")
+            return True
+        else:
+            print(f"❌ curl 下载失败: {result.stderr}")
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        print(f"❌ curl 不可用: {e}")
+    except Exception as e:
+        print(f"❌ curl 执行失败: {e}")
+    
+    # 方法3.5: Windows PowerShell 下载
+    if sys.platform == "win32":
+        try:
+            print("🔄 尝试使用 PowerShell 下载...")
+            ps_cmd = f'Invoke-WebRequest -Uri "{url}" -OutFile "{filename}"'
+            result = subprocess.run([
+                "powershell", "-Command", ps_cmd
+            ], capture_output=True, text=True, timeout=60)
+            
+            if result.returncode == 0 and os.path.exists(filename):
+                print(f"✅ PowerShell 下载完成: {filename}")
+                return True
+            else:
+                print(f"❌ PowerShell 下载失败: {result.stderr}")
+        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            print(f"❌ PowerShell 不可用: {e}")
+        except Exception as e:
+            print(f"❌ PowerShell 执行失败: {e}")
+    
+    # 方法4: 尝试使用 urllib
+    try:
+        print("🔄 尝试使用 urllib 下载...")
+        import urllib.request
+        urllib.request.urlretrieve(url, filename)
+        print(f"✅ urllib 下载完成: {filename}")
+        return True
+    except Exception as e:
+        print(f"❌ urllib 下载失败: {e}")
+    
+    # 方法5: 尝试 HTTP 版本
+    if url.startswith("https://"):
+        http_url = url.replace("https://", "http://")
+        print(f"🔄 尝试 HTTP 下载: {http_url}")
+        try:
+            response = requests.get(http_url, stream=True, timeout=60)
+            response.raise_for_status()
+            
+            with open(filename, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            
+            print(f"✅ HTTP 下载完成: {filename}")
+            return True
+        except Exception as e:
+            print(f"❌ HTTP 下载失败: {e}")
+    
+    print("❌ 所有下载方法都失败了")
+    return False
 
 
 def download_cloudflare_speedtest(os_type, arch_type):

@@ -214,78 +214,75 @@ def download_file(url, filename):
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
         
-        print(f"✅ requests 下载完成: {filename}")
+        print(f"✅ 下载完成: {filename}")
         return True
-    except Exception as e:
-        print(f"❌ requests 下载失败: {e}")
+    except Exception:
+        # 静默失败，继续尝试其他方法
+        pass
     
     # 方法2: 尝试使用 wget
     try:
-        print("🔄 尝试使用 wget 下载...")
         result = subprocess.run([
             "wget", "-O", filename, url
         ], capture_output=True, text=True, timeout=60)
         
         if result.returncode == 0 and os.path.exists(filename):
-            print(f"✅ wget 下载完成: {filename}")
+            print(f"✅ 下载完成: {filename}")
             return True
-        else:
-            print(f"❌ wget 下载失败: {result.stderr}")
-    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-        print(f"❌ wget 不可用: {e}")
-    except Exception as e:
-        print(f"❌ wget 执行失败: {e}")
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        # wget 不可用，静默继续
+        pass
+    except Exception:
+        # wget 执行失败，静默继续
+        pass
     
     # 方法3: 尝试使用 curl
     try:
-        print("🔄 尝试使用 curl 下载...")
         result = subprocess.run([
             "curl", "-L", "-o", filename, url
         ], capture_output=True, text=True, timeout=60)
         
         if result.returncode == 0 and os.path.exists(filename):
-            print(f"✅ curl 下载完成: {filename}")
+            print(f"✅ 下载完成: {filename}")
             return True
-        else:
-            print(f"❌ curl 下载失败: {result.stderr}")
-    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-        print(f"❌ curl 不可用: {e}")
-    except Exception as e:
-        print(f"❌ curl 执行失败: {e}")
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        # curl 不可用，静默继续
+        pass
+    except Exception:
+        # curl 执行失败，静默继续
+        pass
     
     # 方法3.5: Windows PowerShell 下载
     if sys.platform == "win32":
         try:
-            print("🔄 尝试使用 PowerShell 下载...")
             ps_cmd = f'Invoke-WebRequest -Uri "{url}" -OutFile "{filename}"'
             result = subprocess.run([
                 "powershell", "-Command", ps_cmd
             ], capture_output=True, text=True, timeout=60)
             
             if result.returncode == 0 and os.path.exists(filename):
-                print(f"✅ PowerShell 下载完成: {filename}")
+                print(f"✅ 下载完成: {filename}")
                 return True
-            else:
-                print(f"❌ PowerShell 下载失败: {result.stderr}")
-        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-            print(f"❌ PowerShell 不可用: {e}")
-        except Exception as e:
-            print(f"❌ PowerShell 执行失败: {e}")
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            # PowerShell 不可用，静默继续
+            pass
+        except Exception:
+            # PowerShell 执行失败，静默继续
+            pass
     
     # 方法4: 尝试使用 urllib
     try:
-        print("🔄 尝试使用 urllib 下载...")
         import urllib.request
         urllib.request.urlretrieve(url, filename)
-        print(f"✅ urllib 下载完成: {filename}")
+        print(f"✅ 下载完成: {filename}")
         return True
-    except Exception as e:
-        print(f"❌ urllib 下载失败: {e}")
+    except Exception:
+        # urllib 下载失败，静默继续
+        pass
     
     # 方法5: 尝试 HTTP 版本
     if url.startswith("https://"):
         http_url = url.replace("https://", "http://")
-        print(f"🔄 尝试 HTTP 下载: {http_url}")
         try:
             response = requests.get(http_url, stream=True, timeout=60)
             response.raise_for_status()
@@ -294,12 +291,14 @@ def download_file(url, filename):
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
             
-            print(f"✅ HTTP 下载完成: {filename}")
+            print(f"✅ 下载完成: {filename}")
             return True
-        except Exception as e:
-            print(f"❌ HTTP 下载失败: {e}")
+        except Exception:
+            # HTTP 下载失败，静默继续
+            pass
     
-    print("❌ 所有下载方法都失败了")
+    # 所有方法都失败
+    print("❌ 下载失败")
     return False
 
 
@@ -317,15 +316,10 @@ def download_cloudflare_speedtest(os_type, arch_type):
     download_url = f"https://github.com/{GITHUB_REPO}/releases/download/{GITHUB_VERSION}/{exec_name}"
     
     if not download_file(download_url, exec_name):
-        print("下载失败，尝试备用方案...")
-        
-        # 备用方案1: 尝试 HTTP 下载
+        # 备用方案: 尝试 HTTP 下载
         http_url = download_url.replace("https://", "http://")
-        print(f"尝试 HTTP 下载: {http_url}")
-        if download_file(http_url, exec_name):
-            print("HTTP 下载成功")
-        else:
-            # 备用方案2: 提供手动下载说明
+        if not download_file(http_url, exec_name):
+            # 所有自动下载都失败，提供手动下载说明
             print("\n" + "="*60)
             print("自动下载失败，请手动下载 CloudflareSpeedTest:")
             print(f"下载地址: {download_url}")

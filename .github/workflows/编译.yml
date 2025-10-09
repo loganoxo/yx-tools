@@ -59,49 +59,13 @@ jobs:
       - name: 构建可执行文件 (Windows)
         if: matrix.platform == 'windows'
         run: |
-          python -m PyInstaller --onefile \
-            --name CloudflareSpeedTest-${{ matrix.platform }}-${{ matrix.arch }} \
-            --clean \
-            --console \
-            --hidden-import requests \
-            --hidden-import urllib3 \
-            --hidden-import certifi \
-            --hidden-import charset_normalizer \
-            --hidden-import idna \
-            --exclude-module tkinter \
-            --exclude-module matplotlib \
-            --exclude-module numpy \
-            --exclude-module pandas \
-            --exclude-module PIL \
-            --exclude-module cv2 \
-            --exclude-module scipy \
-            --strip \
-            --optimize 2 \
-            cloudflare_speedtest.py
+          python -m PyInstaller --onefile --name CloudflareSpeedTest-${{ matrix.platform }}-${{ matrix.arch }} --clean --console --hidden-import requests --hidden-import urllib3 --hidden-import certifi --hidden-import charset_normalizer --hidden-import idna --exclude-module tkinter --exclude-module matplotlib --exclude-module numpy --exclude-module pandas --exclude-module PIL --exclude-module cv2 --exclude-module scipy --strip --optimize 2 cloudflare_speedtest.py
 
       - name: 构建可执行文件 (Linux/macOS)
         if: matrix.platform != 'windows'
         run: |
           # 使用验证成功的命令，解决 macOS 符号链接问题
-          python -m PyInstaller --onefile \
-            --name CloudflareSpeedTest-${{ matrix.platform }}-${{ matrix.arch }} \
-            --clean \
-            --console \
-            --hidden-import requests \
-            --hidden-import urllib3 \
-            --hidden-import certifi \
-            --hidden-import charset_normalizer \
-            --hidden-import idna \
-            --exclude-module tkinter \
-            --exclude-module matplotlib \
-            --exclude-module numpy \
-            --exclude-module pandas \
-            --exclude-module PIL \
-            --exclude-module cv2 \
-            --exclude-module scipy \
-            --strip \
-            --optimize 2 \
-            cloudflare_speedtest.py
+          python -m PyInstaller --onefile --name CloudflareSpeedTest-${{ matrix.platform }}-${{ matrix.arch }} --clean --console --hidden-import requests --hidden-import urllib3 --hidden-import certifi --hidden-import charset_normalizer --hidden-import idna --exclude-module tkinter --exclude-module matplotlib --exclude-module numpy --exclude-module pandas --exclude-module PIL --exclude-module cv2 --exclude-module scipy --strip --optimize 2 cloudflare_speedtest.py
 
       - name: 重命名文件（Windows）
         if: matrix.platform == 'windows'

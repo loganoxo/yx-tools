@@ -1268,7 +1268,7 @@ def detect_available_regions():
         "-tl", "9999",  # 高延迟阈值
         "-f", CLOUDFLARE_IP_FILE,
         "-httping",  # 使用HTTPing模式获取地区码
-        "-url", "https://cf.xiu2.xyz/url",
+        "-url", "https://jhb.ovh",
         "-o", "region_scan.csv"  # 输出到地区扫描文件
     ])
     

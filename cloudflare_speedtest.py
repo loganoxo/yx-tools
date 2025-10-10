@@ -431,6 +431,11 @@ def download_cloudflare_speedtest(os_type, arch_type):
 
 def download_cloudflare_ips():
     """下载 Cloudflare IP 列表"""
+    # 检查文件是否已存在
+    if os.path.exists(CLOUDFLARE_IP_FILE):
+        print(f"✅ 使用已有IP文件: {CLOUDFLARE_IP_FILE}")
+        return
+    
     print("正在下载 Cloudflare IP 列表...")
     
     if not download_file(CLOUDFLARE_IP_URL, CLOUDFLARE_IP_FILE):
@@ -962,8 +967,6 @@ def handle_normal_mode():
                 "-dn", dn_count,
                 "-sl", speed_limit,
                 "-tl", time_limit,
-                "-httping",
-                "-url", "https://cf.xiu2.xyz/url",
                 "-o", "result.csv"
             ])
             
@@ -1132,10 +1135,7 @@ def run_speedtest(exec_name, cfcolo, dn_count, speed_limit, time_limit):
         "-dn", dn_count,
         "-sl", speed_limit,
         "-tl", time_limit,
-        "-cfcolo", cfcolo,
-        "-f", CLOUDFLARE_IP_FILE,
-        "-httping",  # 使用HTTPing模式获取地区码
-        "-url", "https://cf.xiu2.xyz/url"  # 使用官方测速地址
+        "-f", CLOUDFLARE_IP_FILE
     ])
     
     try:

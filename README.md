@@ -237,7 +237,7 @@ cloudflare-speedtest/
 ## 致谢
 
 - [Cloudflare](https://www.cloudflare.com/) - 提供全球CDN服务
-- [CloudflareSpeedTest](https://github.com/ShadowObj/CloudflareSpeedTest) - 原始测速工具
+- [CloudflareSpeedTest](https://github.com/XIU2/CloudflareSpeedTest) - 原始测速工具
 - 所有贡献者和用户的支持
 
 

@@ -158,9 +158,9 @@ AIRPORT_CODES_FILE = "airport_codes.json"
 CLOUDFLARE_IP_URL = "https://www.cloudflare.com/ips-v4/"
 CLOUDFLARE_IP_FILE = "Cloudflare.txt"
 
-# GitHub Release版本
-GITHUB_VERSION = "v2.2.6"
-GITHUB_REPO = "ShadowObj/CloudflareSpeedTest"
+# GitHub Release版本 - 使用官方CloudflareSpeedTest
+GITHUB_VERSION = "v2.3.4"
+GITHUB_REPO = "XIU2/CloudflareSpeedTest"
 
 
 def get_system_info():
@@ -194,11 +194,13 @@ def get_system_info():
 
 
 def get_executable_name(os_type, arch_type):
-    """获取可执行文件名"""
+    """获取可执行文件名 - 使用官方命名规则"""
     if os_type == "win":
-        return f"CloudflareSpeedtest_{os_type}_{arch_type}.exe"
-    else:
-        return f"CloudflareSpeedtest_{os_type}_{arch_type}"
+        return f"CloudflareST_windows_{arch_type}.exe"
+    elif os_type == "darwin":
+        return f"CloudflareST_darwin_{arch_type}"
+    else:  # linux
+        return f"CloudflareST_linux_{arch_type}"
 
 
 def download_file(url, filename):
@@ -303,39 +305,120 @@ def download_file(url, filename):
 
 
 def download_cloudflare_speedtest(os_type, arch_type):
-    """下载 CloudflareSpeedTest 可执行文件"""
-    exec_name = get_executable_name(os_type, arch_type)
+    """下载 CloudflareSpeedTest 可执行文件（优先使用反代版本）"""
+    # 优先检查反代版本
+    proxy_exec_name = f"CloudflareST_proxy_{os_type}_{arch_type}"
+    if os.path.exists(proxy_exec_name):
+        print(f"✓ 使用反代版本: {proxy_exec_name}")
+        return proxy_exec_name
     
-    if os.path.exists(exec_name):
-        print(f"CloudflareSpeedTest 已存在: {exec_name}")
-        return exec_name
+    # 检查是否已下载反代版本
+    print("反代版本不存在，开始下载反代版本...")
     
-    print("CloudflareSpeedTest 不存在，开始下载...")
+    # 构建下载URL - 使用您的GitHub仓库
+    if os_type == "win":
+        if arch_type == "amd64":
+            archive_name = "CloudflareST_proxy_windows_amd64.zip"
+        else:
+            archive_name = "CloudflareST_proxy_windows_386.zip"
+    elif os_type == "darwin":
+        if arch_type == "amd64":
+            archive_name = "CloudflareST_proxy_darwin_amd64.zip"
+        else:
+            archive_name = "CloudflareST_proxy_darwin_arm64.zip"
+    else:  # linux
+        if arch_type == "amd64":
+            archive_name = "CloudflareST_proxy_linux_amd64.tar.gz"
+        elif arch_type == "386":
+            archive_name = "CloudflareST_proxy_linux_386.tar.gz"
+        else:  # arm64
+            archive_name = "CloudflareST_proxy_linux_arm64.tar.gz"
     
-    # 构建下载URL
-    download_url = f"https://github.com/{GITHUB_REPO}/releases/download/{GITHUB_VERSION}/{exec_name}"
+    download_url = f"https://github.com/byJoey/CloudflareSpeedTest/releases/download/v1.0/{archive_name}"
     
-    if not download_file(download_url, exec_name):
+    if not download_file(download_url, archive_name):
         # 备用方案: 尝试 HTTP 下载
         http_url = download_url.replace("https://", "http://")
-        if not download_file(http_url, exec_name):
+        if not download_file(http_url, archive_name):
             # 所有自动下载都失败，提供手动下载说明
             print("\n" + "="*60)
-            print("自动下载失败，请手动下载 CloudflareSpeedTest:")
+            print("自动下载失败，请手动下载反代版本:")
             print(f"下载地址: {download_url}")
-            print(f"保存为: {exec_name}")
+            print(f"解压后文件名应为: CloudflareST_proxy_{os_type}_{arch_type}{'.exe' if os_type == 'win' else ''}")
             print("="*60)
             
-            # 检查是否有手动下载的文件
-            if os.path.exists(exec_name):
-                print(f"找到手动下载的文件: {exec_name}")
+            # 检查是否有手动下载的反代版本文件
+            proxy_exec_name = f"CloudflareST_proxy_{os_type}_{arch_type}"
+            if os.path.exists(proxy_exec_name):
+                print(f"找到手动下载的反代版本: {proxy_exec_name}")
                 # 手动下载的文件也需要赋予执行权限
                 if os_type != "win":
-                    os.chmod(exec_name, 0o755)
-                    print(f"已赋予执行权限: {exec_name}")
+                    os.chmod(proxy_exec_name, 0o755)
+                    print(f"已赋予执行权限: {proxy_exec_name}")
+                return proxy_exec_name
             else:
-                print("未找到 CloudflareSpeedTest 文件，程序无法继续")
+                print("未找到反代版本文件，程序无法继续")
                 sys.exit(1)
+    else:
+        # 解压文件
+        print(f"正在解压: {archive_name}")
+        try:
+            if archive_name.endswith('.zip'):
+                import zipfile
+                with zipfile.ZipFile(archive_name, 'r') as zip_ref:
+                    zip_ref.extractall('.')
+            elif archive_name.endswith('.tar.gz'):
+                import tarfile
+                with tarfile.open(archive_name, 'r:gz') as tar_ref:
+                    tar_ref.extractall('.')
+            
+            # 查找反代版本可执行文件
+            found_executable = None
+            for root, dirs, files in os.walk('.'):
+                for file in files:
+                    if file.startswith('CloudflareST_proxy_') and not file.endswith(('.zip', '.tar.gz')):
+                        found_executable = os.path.join(root, file)
+                        break
+                if found_executable:
+                    break
+            
+            if found_executable:
+                # 获取最终文件名
+                final_name = os.path.basename(found_executable)
+                
+                # 如果文件不在当前目录，移动到当前目录
+                if os.path.abspath(found_executable) != os.path.abspath(final_name):
+                    if os.path.exists(final_name):
+                        os.remove(final_name)
+                    # 确保源文件存在
+                    if os.path.exists(found_executable):
+                        os.rename(found_executable, final_name)
+                    else:
+                        print(f"❌ 源文件不存在: {found_executable}")
+                        sys.exit(1)
+                
+                # 设置执行权限
+                if os_type != "win":
+                    os.chmod(final_name, 0o755)
+                
+                print(f"✓ 反代版本设置完成: {final_name}")
+                return final_name
+            else:
+                print("解压后未找到反代版本可执行文件")
+                # 列出解压后的所有文件用于调试
+                print("解压后的文件:")
+                for root, dirs, files in os.walk('.'):
+                    for file in files:
+                        if not file.endswith(('.zip', '.tar.gz', '.txt', '.md')):
+                            print(f"  - {os.path.join(root, file)}")
+                sys.exit(1)
+            
+            # 清理压缩包
+            os.remove(archive_name)
+            
+        except Exception as e:
+            print(f"解压失败: {e}")
+            sys.exit(1)
     
     # 在Unix系统上赋予执行权限
     if os_type != "win":
@@ -601,30 +684,7 @@ def handle_proxy_mode():
             return None, None, None, None
         
         print("开始对反代IP列表进行测速...")
-        print("注意: 反代模式将测试IP列表在不同机场码下的性能表现")
-        
-        # 获取机场码（用于性能测试）
-        print("\n请输入测试机场码或城市名称:")
-        print("提示: 可以输入 HKG、SIN、NRT、LAX 或 香港、新加坡、东京、洛杉矶")
-        
-        while True:
-            user_input = input("\n请输入机场码或城市名称 [默认: 香港]: ").strip()
-            if not user_input:
-                user_input = "香港"
-            
-            # 使用现有的映射功能
-            cfcolo = find_airport_by_name(user_input)
-            
-            if cfcolo and cfcolo in AIRPORT_CODES:
-                info = AIRPORT_CODES[cfcolo]
-                region = info.get('region', '')
-                country = info.get('country', '')
-                print(f"✓ 已选择: {info['name']} ({cfcolo}) - {country} [{region}]")
-                break
-            else:
-                print(f"✗ 未找到匹配的城市或机场码: {user_input}")
-                print("  提示: 输入 HELP 查看帮助，输入 LIST 查看完整列表")
-                print("  📝 可以尝试: 香港、新加坡、东京、HKG、SIN、NRT")
+        print("注意: 反代模式直接对IP列表测速，不需要选择机场码")
         
         # 显示预设配置选项
         display_preset_configs()
@@ -728,7 +788,7 @@ def handle_proxy_mode():
                 print("✗ 无效选择，请输入 1-4")
         
         print(f"\n测速参数: 测试{dn_count}个IP, 速度下限{speed_limit}MB/s, 延迟上限{time_limit}ms")
-        print("模式: 反代IP列表测速（无需机场码）")
+        print("模式: 反代IP列表测速")
         
         # 运行测速
         run_speedtest_with_file("ips_ports.txt", dn_count, speed_limit, time_limit)

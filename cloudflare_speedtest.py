@@ -392,10 +392,13 @@ def download_cloudflare_speedtest(os_type, arch_type):
                     break
             
             if found_executable:
-                # 获取最终文件名
-                final_name = os.path.basename(found_executable)
+                # 获取最终文件名 - 使用标准格式
+                if os_type == "win":
+                    final_name = f"CloudflareST_proxy_{os_type}_{arch_type}.exe"
+                else:
+                    final_name = f"CloudflareST_proxy_{os_type}_{arch_type}"
                 
-                # 如果文件不在当前目录，移动到当前目录
+                # 如果文件不在当前目录或文件名不匹配，移动到当前目录并重命名
                 if os.path.abspath(found_executable) != os.path.abspath(final_name):
                     if os.path.exists(final_name):
                         os.remove(final_name)

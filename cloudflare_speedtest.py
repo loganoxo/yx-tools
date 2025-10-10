@@ -502,21 +502,25 @@ def find_airport_by_name(query):
 
 def display_preset_configs():
     """显示预设配置"""
-    print("\n预设配置选项:")
-    print("-" * 60)
+    print("\n" + "=" * 60)
+    print(" 预设配置选项")
+    print("=" * 60)
     print("  1. 快速测试 (10个IP, 1MB/s, 1000ms)")
     print("  2. 标准测试 (20个IP, 2MB/s, 500ms)")
     print("  3. 高质量测试 (50个IP, 5MB/s, 200ms)")
     print("  4. 自定义配置")
-    print("-" * 60)
+    print("=" * 60)
 
 
 def get_user_input():
     """获取用户输入参数"""
     # 询问功能选择
-    print("\n功能选择:")
+    print("\n" + "=" * 60)
+    print(" 功能选择")
+    print("=" * 60)
     print("  1. 常规测速 - 测试指定机场码的IP速度")
     print("  2. 优选反代 - 从CSV文件生成反代IP列表")
+    print("=" * 60)
     
     choice = input("\n请选择功能 [默认: 1]: ").strip()
     if not choice:
@@ -554,14 +558,15 @@ def select_csv_file():
 
 def handle_proxy_mode():
     """处理优选反代模式"""
-    print("\n优选反代模式")
-    print("=" * 50)
-    print("此功能将从CSV文件中提取IP和端口信息，生成反代IP列表")
-    print("CSV文件格式要求：")
-    print("  - 包含 'IP 地址' 和 '端口' 列")
-    print("  - 或包含 'ip' 和 'port' 列")
-    print("  - 支持逗号分隔的CSV格式")
-    print("=" * 50)
+    print("\n" + "=" * 70)
+    print(" 优选反代模式")
+    print("=" * 70)
+    print(" 此功能将从CSV文件中提取IP和端口信息，生成反代IP列表")
+    print(" CSV文件格式要求：")
+    print("   - 包含 'IP 地址' 和 '端口' 列")
+    print("   - 或包含 'ip' 和 'port' 列")
+    print("   - 支持逗号分隔的CSV格式")
+    print("=" * 70)
     
     # 选择CSV文件
     csv_file = select_csv_file()
@@ -575,25 +580,155 @@ def handle_proxy_mode():
     success = generate_proxy_list(csv_file, "ips_ports.txt")
     
     if success:
-        print("\n优选反代功能完成！")
-        print("生成的文件:")
-        print("  - ips_ports.txt (反代IP列表)")
-        print("  - 格式: IP:端口 (每行一个)")
-        print("\n使用说明:")
-        print("  - 可直接用于反代配置")
-        print("  - 支持各种代理软件")
-        print("  - 建议定期更新IP列表")
+        print("\n" + "=" * 60)
+        print(" 优选反代功能完成！")
+        print("=" * 60)
+        print(" 生成的文件:")
+        print("   - ips_ports.txt (反代IP列表)")
+        print("   - 格式: IP:端口 (每行一个)")
+        print("\n 使用说明:")
+        print("   - 可直接用于反代配置")
+        print("   - 支持各种代理软件")
+        print("   - 建议定期更新IP列表")
+        print("=" * 60)
         
-        # 直接开始测速
+        # 询问是否进行测速
         print("\n" + "=" * 50)
+        test_choice = input("是否对反代IP列表进行测速？[Y/n]: ").strip().lower()
+        
+        if test_choice in ['n', 'no']:
+            print("跳过测速，优选反代功能完成")
+            return None, None, None, None
+        
         print("开始对反代IP列表进行测速...")
+        print("注意: 反代模式将测试IP列表在不同机场码下的性能表现")
         
-        # 使用默认测速参数
-        dn_count = "10"
-        speed_limit = "10" 
-        time_limit = "10"
+        # 获取机场码（用于性能测试）
+        print("\n请输入测试机场码或城市名称:")
+        print("提示: 可以输入 HKG、SIN、NRT、LAX 或 香港、新加坡、东京、洛杉矶")
         
-        print(f"测速参数: 测试{dn_count}个IP, 速度下限{speed_limit}MB/s, 延迟上限{time_limit}ms")
+        while True:
+            user_input = input("\n请输入机场码或城市名称 [默认: 香港]: ").strip()
+            if not user_input:
+                user_input = "香港"
+            
+            # 使用现有的映射功能
+            cfcolo = find_airport_by_name(user_input)
+            
+            if cfcolo and cfcolo in AIRPORT_CODES:
+                info = AIRPORT_CODES[cfcolo]
+                region = info.get('region', '')
+                country = info.get('country', '')
+                print(f"✓ 已选择: {info['name']} ({cfcolo}) - {country} [{region}]")
+                break
+            else:
+                print(f"✗ 未找到匹配的城市或机场码: {user_input}")
+                print("  提示: 输入 HELP 查看帮助，输入 LIST 查看完整列表")
+                print("  📝 可以尝试: 香港、新加坡、东京、HKG、SIN、NRT")
+        
+        # 显示预设配置选项
+        display_preset_configs()
+        
+        # 获取配置选择
+        while True:
+            config_choice = input("\n请选择配置 [默认: 1]: ").strip()
+            if not config_choice:
+                config_choice = "1"
+            
+            if config_choice == "1":
+                # 快速测试
+                dn_count = "10"
+                speed_limit = "1"
+                time_limit = "1000"
+                print("✓ 已选择: 快速测试 (10个IP, 1MB/s, 1000ms)")
+                break
+            elif config_choice == "2":
+                # 标准测试
+                dn_count = "20"
+                speed_limit = "2"
+                time_limit = "500"
+                print("✓ 已选择: 标准测试 (20个IP, 2MB/s, 500ms)")
+                break
+            elif config_choice == "3":
+                # 高质量测试
+                dn_count = "50"
+                speed_limit = "5"
+                time_limit = "200"
+                print("✓ 已选择: 高质量测试 (50个IP, 5MB/s, 200ms)")
+                break
+            elif config_choice == "4":
+                # 自定义配置
+                print("\n自定义配置:")
+                
+                # 获取测试IP数量
+                while True:
+                    dn_count = input("请输入要测试的 IP 数量 [默认: 10]: ").strip()
+                    if not dn_count:
+                        dn_count = "10"
+                    
+                    try:
+                        dn_count_int = int(dn_count)
+                        if dn_count_int <= 0:
+                            print("✗ 请输入大于0的数字")
+                            continue
+                        if dn_count_int > 200:
+                            confirm = input(f"  警告: 测试 {dn_count_int} 个IP可能需要较长时间，是否继续？[y/N]: ").strip().lower()
+                            if confirm != 'y':
+                                continue
+                        dn_count = str(dn_count_int)
+                        break
+                    except ValueError:
+                        print("✗ 请输入有效的数字")
+                
+                # 获取下载速度下限
+                while True:
+                    speed_limit = input("请输入下载速度下限 (MB/s) [默认: 1]: ").strip()
+                    if not speed_limit:
+                        speed_limit = "1"
+                    
+                    try:
+                        speed_limit_float = float(speed_limit)
+                        if speed_limit_float < 0:
+                            print("✗ 请输入大于等于0的数字")
+                            continue
+                        if speed_limit_float > 100:
+                            print("警告: 速度阈值过高，可能找不到符合条件的IP")
+                            confirm = input("  是否继续？[y/N]: ").strip().lower()
+                            if confirm != 'y':
+                                continue
+                        speed_limit = str(speed_limit_float)
+                        break
+                    except ValueError:
+                        print("✗ 请输入有效的数字")
+                
+                # 获取延迟阈值
+                while True:
+                    time_limit = input("请输入延迟阈值 (ms) [默认: 1000]: ").strip()
+                    if not time_limit:
+                        time_limit = "1000"
+                    
+                    try:
+                        time_limit_int = int(time_limit)
+                        if time_limit_int <= 0:
+                            print("✗ 请输入大于0的数字")
+                            continue
+                        if time_limit_int > 5000:
+                            print("警告: 延迟阈值过高，可能影响使用体验")
+                            confirm = input("  是否继续？[y/N]: ").strip().lower()
+                            if confirm != 'y':
+                                continue
+                        time_limit = str(time_limit_int)
+                        break
+                    except ValueError:
+                        print("✗ 请输入有效的数字")
+                
+                print(f"✓ 自定义配置: {dn_count}个IP, {speed_limit}MB/s, {time_limit}ms")
+                break
+            else:
+                print("✗ 无效选择，请输入 1-4")
+        
+        print(f"\n测速参数: 测试{dn_count}个IP, 速度下限{speed_limit}MB/s, 延迟上限{time_limit}ms")
+        print("模式: 反代IP列表测速（无需机场码）")
         
         # 运行测速
         run_speedtest_with_file("ips_ports.txt", dn_count, speed_limit, time_limit)
@@ -626,47 +761,114 @@ def handle_normal_mode():
     else:
         display_popular_codes()
     
-    # 获取机场码
-    while True:
-        user_input = input("\n请输入机场码或城市名称 [默认: 香港]: ").strip()
-        if not user_input:
-            user_input = "香港"
+    # 询问测速模式
+    print("\n" + "=" * 60)
+    print(" 测速模式选择")
+    print("=" * 60)
+    print("  1. 单个机场码测速")
+    print("  2. 地区优选测速（亚太地区）")
+    print("  3. 地区优选测速（中国周边）")
+    print("  4. 自定义多机场码测速")
+    print("=" * 60)
+    
+    mode_choice = input("\n请选择测速模式 [默认: 1]: ").strip()
+    if not mode_choice:
+        mode_choice = "1"
+    
+    cfcolo = None
+    
+    if mode_choice == "1":
+        # 单个机场码测速
+        while True:
+            user_input = input("\n请输入机场码或城市名称 [默认: 香港]: ").strip()
+            if not user_input:
+                user_input = "香港"
+            
+            # 转换为大写用于特殊命令检查
+            user_input_upper = user_input.upper()
+            
+            # 检查特殊命令
+            if user_input_upper == "LIST":
+                display_airport_codes()
+                continue
+            elif user_input_upper == "HELP":
+                print("\n使用提示:")
+                print("  - 可以输入机场码: HKG、SIN、LAX、NRT")
+                print("  - 可以输入城市名称: 香港、新加坡、东京、洛杉矶")
+                print("  - 输入 LIST 查看完整列表")
+                print("  - 输入 POPULAR 查看热门机场码")
+                print("\n📝 示例:")
+                print("  香港  → 自动识别为 HKG")
+                print("  tokyo → 匹配东京相关机场")
+                print("  美国  → 显示所有美国机场供选择")
+                continue
+            elif user_input_upper == "POPULAR":
+                display_popular_codes()
+                continue
+            
+            # 尝试查找机场码
+            cfcolo = find_airport_by_name(user_input)
+            
+            if cfcolo and cfcolo in AIRPORT_CODES:
+                info = AIRPORT_CODES[cfcolo]
+                region = info.get('region', '')
+                country = info.get('country', '')
+                print(f"✓ 已选择: {info['name']} ({cfcolo}) - {country} [{region}]")
+                break
+            else:
+                print(f"✗ 未找到匹配的城市或机场码: {user_input}")
+                print("  提示: 输入 HELP 查看帮助，输入 LIST 查看完整列表")
+                print("  📝 可以尝试: 香港、新加坡、东京、HKG、SIN、NRT")
+    
+    elif mode_choice == "2":
+        # 亚太地区优选
+        print("✓ 已选择: 亚太地区优选测速")
+        cfcolo = "HKG,SIN,NRT,ICN,KUL,BKK,MNL,CGK,BNE,SYD,AKL"
+        print("包含机场码: 香港、新加坡、东京、首尔、吉隆坡、曼谷、马尼拉、雅加达、布里斯班、悉尼、奥克兰")
+    
+    elif mode_choice == "3":
+        # 中国周边优选
+        print("✓ 已选择: 中国周边优选测速")
+        cfcolo = "HKG,TPE,NRT,ICN,SIN"
+        print("包含机场码: 香港、台北、东京、首尔、新加坡")
+    
+    elif mode_choice == "4":
+        # 自定义多机场码
+        print("\n自定义多机场码测速")
+        print("提示: 可以输入多个机场码，用逗号分隔")
+        print("示例: HKG,SIN,NRT,LAX,SEA,SJC,FRA,MAD")
         
-        # 转换为大写用于特殊命令检查
-        user_input_upper = user_input.upper()
-        
-        # 检查特殊命令
-        if user_input_upper == "LIST":
-            display_airport_codes()
-            continue
-        elif user_input_upper == "HELP":
-            print("\n使用提示:")
-            print("  - 可以输入机场码: HKG、SIN、LAX、NRT")
-            print("  - 可以输入城市名称: 香港、新加坡、东京、洛杉矶")
-            print("  - 输入 LIST 查看完整列表")
-            print("  - 输入 POPULAR 查看热门机场码")
-            print("\n📝 示例:")
-            print("  香港  → 自动识别为 HKG")
-            print("  tokyo → 匹配东京相关机场")
-            print("  美国  → 显示所有美国机场供选择")
-            continue
-        elif user_input_upper == "POPULAR":
-            display_popular_codes()
-            continue
-        
-        # 尝试查找机场码
-        cfcolo = find_airport_by_name(user_input)
-        
-        if cfcolo and cfcolo in AIRPORT_CODES:
-            info = AIRPORT_CODES[cfcolo]
-            region = info.get('region', '')
-            country = info.get('country', '')
-            print(f"✓ 已选择: {info['name']} ({cfcolo}) - {country} [{region}]")
-            break
-        else:
-            print(f"✗ 未找到匹配的城市或机场码: {user_input}")
-            print("  提示: 输入 HELP 查看帮助，输入 LIST 查看完整列表")
-            print("  📝 可以尝试: 香港、新加坡、东京、HKG、SIN、NRT")
+        while True:
+            custom_input = input("\n请输入多个机场码 [默认: HKG,SIN,NRT]: ").strip()
+            if not custom_input:
+                custom_input = "HKG,SIN,NRT"
+            
+            # 验证所有机场码
+            codes = [code.strip().upper() for code in custom_input.split(',')]
+            valid_codes = []
+            invalid_codes = []
+            
+            for code in codes:
+                if code in AIRPORT_CODES:
+                    valid_codes.append(code)
+                else:
+                    invalid_codes.append(code)
+            
+            if invalid_codes:
+                print(f"✗ 无效的机场码: {', '.join(invalid_codes)}")
+                print("请检查拼写或输入有效的机场码")
+                continue
+            
+            if valid_codes:
+                cfcolo = ','.join(valid_codes)
+                print(f"✓ 已选择: {len(valid_codes)} 个机场码")
+                for code in valid_codes:
+                    info = AIRPORT_CODES[code]
+                    print(f"  - {code}: {info['name']} ({info.get('country', '')})")
+                break
+    else:
+        print("✗ 无效选择，使用默认单个机场码模式")
+        cfcolo = "HKG"
     
     # 显示预设配置选项
     display_preset_configs()
@@ -795,7 +997,7 @@ def generate_proxy_list(result_file="result.csv", output_file="ips_ports.txt"):
         # 生成反代IP列表
         proxy_ips = []
         for row in rows:
-            # 尝试多种可能的列名
+            # 查找IP和端口列
             ip = None
             port = None
             
@@ -817,14 +1019,19 @@ def generate_proxy_list(result_file="result.csv", output_file="ips_ports.txt"):
                     port = row[key].strip()
                     break
             
+            # 如果IP地址中包含端口信息（如 1.2.3.4:443），提取端口
+            if ip and ':' in ip:
+                ip_parts = ip.split(':')
+                if len(ip_parts) == 2:
+                    ip = ip_parts[0]  # 提取纯IP地址
+                    if not port:  # 如果还没有找到端口，使用IP中的端口
+                        port = ip_parts[1]
+            
             # 如果没有找到端口，使用默认值
             if not port:
                 port = '443'
             
             if ip and port:
-                # 提取IP地址（去掉端口部分）
-                if ':' in ip:
-                    ip = ip.split(':')[0]
                 proxy_ips.append(f"{ip}:{port}")
         
         # 保存到文件
@@ -852,13 +1059,13 @@ def generate_proxy_list(result_file="result.csv", output_file="ips_ports.txt"):
 
 
 def run_speedtest_with_file(ip_file, dn_count, speed_limit, time_limit):
-    """使用指定IP文件运行测速"""
+    """使用指定IP文件运行测速（反代模式，不需要机场码）"""
     try:
         # 获取系统信息
         os_type, arch_type = get_system_info()
         exec_name = download_cloudflare_speedtest(os_type, arch_type)
         
-        # 构建命令
+        # 构建命令（反代模式不需要机场码参数）
         cmd = [
             f"./{exec_name}",
             "-f", ip_file,
@@ -937,11 +1144,14 @@ def main():
         except:
             pass
     
-    print("=" * 70)
+    print("=" * 80)
     print(" Cloudflare SpeedTest 跨平台自动化脚本")
+    print("=" * 80)
     print(" 支持 Windows / Linux / macOS (Darwin)")
     print(f" 内置 {len(AIRPORT_CODES)} 个全球数据中心机场码")
-    print("=" * 70)
+    print(" 支持单个/多机场码/地区优选测速")
+    print(" 支持优选反代IP列表生成")
+    print("=" * 80)
     
     # 获取系统信息
     os_type, arch_type = get_system_info()
@@ -963,6 +1173,12 @@ def main():
     
     # 获取用户输入
     print(f"\n[参数配置]")
+    print("=" * 60)
+    print(" GitHub https://github.com/byJoey/yx-tools")
+    print(" YouTube https://www.youtube.com/@Joeyblog")
+    print(" 博客 https://joeyblog.net")
+    print(" Telegram交流群: https://t.me/+ft-zI76oovgwNmRh")
+    print("=" * 60)
     result = get_user_input()
     
     # 检查是否是优选反代模式

@@ -12,6 +12,7 @@ import platform
 import subprocess
 import requests
 import json
+import csv
 from pathlib import Path
 
 
@@ -681,254 +682,10 @@ def handle_proxy_mode():
         
         if test_choice in ['n', 'no']:
             print("跳过测速，优选反代功能完成")
-            return None, None, None, None
-        
+        return None, None, None, None
+
         print("开始对反代IP列表进行测速...")
         print("注意: 反代模式直接对IP列表测速，不需要选择机场码")
-        
-        # 显示预设配置选项
-        display_preset_configs()
-        
-        # 获取配置选择
-        while True:
-            config_choice = input("\n请选择配置 [默认: 1]: ").strip()
-            if not config_choice:
-                config_choice = "1"
-            
-            if config_choice == "1":
-                # 快速测试
-                dn_count = "10"
-                speed_limit = "1"
-                time_limit = "1000"
-                print("✓ 已选择: 快速测试 (10个IP, 1MB/s, 1000ms)")
-                break
-            elif config_choice == "2":
-                # 标准测试
-                dn_count = "20"
-                speed_limit = "2"
-                time_limit = "500"
-                print("✓ 已选择: 标准测试 (20个IP, 2MB/s, 500ms)")
-                break
-            elif config_choice == "3":
-                # 高质量测试
-                dn_count = "50"
-                speed_limit = "5"
-                time_limit = "200"
-                print("✓ 已选择: 高质量测试 (50个IP, 5MB/s, 200ms)")
-                break
-            elif config_choice == "4":
-                # 自定义配置
-                print("\n自定义配置:")
-                
-                # 获取测试IP数量
-                while True:
-                    dn_count = input("请输入要测试的 IP 数量 [默认: 10]: ").strip()
-                    if not dn_count:
-                        dn_count = "10"
-                    
-                    try:
-                        dn_count_int = int(dn_count)
-                        if dn_count_int <= 0:
-                            print("✗ 请输入大于0的数字")
-                            continue
-                        if dn_count_int > 200:
-                            confirm = input(f"  警告: 测试 {dn_count_int} 个IP可能需要较长时间，是否继续？[y/N]: ").strip().lower()
-                            if confirm != 'y':
-                                continue
-                        dn_count = str(dn_count_int)
-                        break
-                    except ValueError:
-                        print("✗ 请输入有效的数字")
-                
-                # 获取下载速度下限
-                while True:
-                    speed_limit = input("请输入下载速度下限 (MB/s) [默认: 1]: ").strip()
-                    if not speed_limit:
-                        speed_limit = "1"
-                    
-                    try:
-                        speed_limit_float = float(speed_limit)
-                        if speed_limit_float < 0:
-                            print("✗ 请输入大于等于0的数字")
-                            continue
-                        if speed_limit_float > 100:
-                            print("警告: 速度阈值过高，可能找不到符合条件的IP")
-                            confirm = input("  是否继续？[y/N]: ").strip().lower()
-                            if confirm != 'y':
-                                continue
-                        speed_limit = str(speed_limit_float)
-                        break
-                    except ValueError:
-                        print("✗ 请输入有效的数字")
-                
-                # 获取延迟阈值
-                while True:
-                    time_limit = input("请输入延迟阈值 (ms) [默认: 1000]: ").strip()
-                    if not time_limit:
-                        time_limit = "1000"
-                    
-                    try:
-                        time_limit_int = int(time_limit)
-                        if time_limit_int <= 0:
-                            print("✗ 请输入大于0的数字")
-                            continue
-                        if time_limit_int > 5000:
-                            print("警告: 延迟阈值过高，可能影响使用体验")
-                            confirm = input("  是否继续？[y/N]: ").strip().lower()
-                            if confirm != 'y':
-                                continue
-                        time_limit = str(time_limit_int)
-                        break
-                    except ValueError:
-                        print("✗ 请输入有效的数字")
-                
-                print(f"✓ 自定义配置: {dn_count}个IP, {speed_limit}MB/s, {time_limit}ms")
-                break
-            else:
-                print("✗ 无效选择，请输入 1-4")
-        
-        print(f"\n测速参数: 测试{dn_count}个IP, 速度下限{speed_limit}MB/s, 延迟上限{time_limit}ms")
-        print("模式: 反代IP列表测速")
-        
-        # 运行测速
-        run_speedtest_with_file("ips_ports.txt", dn_count, speed_limit, time_limit)
-        return None, None, None, None
-    else:
-        print("\n优选反代功能失败")
-        return None, None, None, None
-
-
-def handle_normal_mode():
-    """处理常规测速模式"""
-    # 询问显示方式
-    print("\n显示选项:")
-    print("  1. 显示热门机场码")
-    print("  2. 显示全部机场码")
-    print("  3. 按地区筛选")
-    
-    choice = input("\n请选择显示方式 [默认: 1]: ").strip()
-    if not choice:
-        choice = "1"
-    
-    if choice == "1":
-        display_popular_codes()
-    elif choice == "2":
-        display_airport_codes()
-    elif choice == "3":
-        print("\n可用地区: 亚太、北美、欧洲、中东、南美、非洲")
-        region = input("请输入地区名称: ").strip()
-        display_airport_codes(region)
-    else:
-        display_popular_codes()
-    
-    # 询问测速模式
-    print("\n" + "=" * 60)
-    print(" 测速模式选择")
-    print("=" * 60)
-    print("  1. 单个机场码测速")
-    print("  2. 地区优选测速（亚太地区）")
-    print("  3. 地区优选测速（中国周边）")
-    print("  4. 自定义多机场码测速")
-    print("=" * 60)
-    
-    mode_choice = input("\n请选择测速模式 [默认: 1]: ").strip()
-    if not mode_choice:
-        mode_choice = "1"
-    
-    cfcolo = None
-    
-    if mode_choice == "1":
-        # 单个机场码测速
-        while True:
-            user_input = input("\n请输入机场码或城市名称 [默认: 香港]: ").strip()
-            if not user_input:
-                user_input = "香港"
-            
-            # 转换为大写用于特殊命令检查
-            user_input_upper = user_input.upper()
-            
-            # 检查特殊命令
-            if user_input_upper == "LIST":
-                display_airport_codes()
-                continue
-            elif user_input_upper == "HELP":
-                print("\n使用提示:")
-                print("  - 可以输入机场码: HKG、SIN、LAX、NRT")
-                print("  - 可以输入城市名称: 香港、新加坡、东京、洛杉矶")
-                print("  - 输入 LIST 查看完整列表")
-                print("  - 输入 POPULAR 查看热门机场码")
-                print("\n📝 示例:")
-                print("  香港  → 自动识别为 HKG")
-                print("  tokyo → 匹配东京相关机场")
-                print("  美国  → 显示所有美国机场供选择")
-                continue
-            elif user_input_upper == "POPULAR":
-                display_popular_codes()
-                continue
-            
-            # 尝试查找机场码
-            cfcolo = find_airport_by_name(user_input)
-            
-            if cfcolo and cfcolo in AIRPORT_CODES:
-                info = AIRPORT_CODES[cfcolo]
-                region = info.get('region', '')
-                country = info.get('country', '')
-                print(f"✓ 已选择: {info['name']} ({cfcolo}) - {country} [{region}]")
-                break
-            else:
-                print(f"✗ 未找到匹配的城市或机场码: {user_input}")
-                print("  提示: 输入 HELP 查看帮助，输入 LIST 查看完整列表")
-                print("  📝 可以尝试: 香港、新加坡、东京、HKG、SIN、NRT")
-    
-    elif mode_choice == "2":
-        # 亚太地区优选
-        print("✓ 已选择: 亚太地区优选测速")
-        cfcolo = "HKG,SIN,NRT,ICN,KUL,BKK,MNL,CGK,BNE,SYD,AKL"
-        print("包含机场码: 香港、新加坡、东京、首尔、吉隆坡、曼谷、马尼拉、雅加达、布里斯班、悉尼、奥克兰")
-    
-    elif mode_choice == "3":
-        # 中国周边优选
-        print("✓ 已选择: 中国周边优选测速")
-        cfcolo = "HKG,TPE,NRT,ICN,SIN"
-        print("包含机场码: 香港、台北、东京、首尔、新加坡")
-    
-    elif mode_choice == "4":
-        # 自定义多机场码
-        print("\n自定义多机场码测速")
-        print("提示: 可以输入多个机场码，用逗号分隔")
-        print("示例: HKG,SIN,NRT,LAX,SEA,SJC,FRA,MAD")
-        
-        while True:
-            custom_input = input("\n请输入多个机场码 [默认: HKG,SIN,NRT]: ").strip()
-            if not custom_input:
-                custom_input = "HKG,SIN,NRT"
-            
-            # 验证所有机场码
-            codes = [code.strip().upper() for code in custom_input.split(',')]
-            valid_codes = []
-            invalid_codes = []
-            
-            for code in codes:
-                if code in AIRPORT_CODES:
-                    valid_codes.append(code)
-                else:
-                    invalid_codes.append(code)
-            
-            if invalid_codes:
-                print(f"✗ 无效的机场码: {', '.join(invalid_codes)}")
-                print("请检查拼写或输入有效的机场码")
-                continue
-            
-            if valid_codes:
-                cfcolo = ','.join(valid_codes)
-                print(f"✓ 已选择: {len(valid_codes)} 个机场码")
-                for code in valid_codes:
-                    info = AIRPORT_CODES[code]
-                    print(f"  - {code}: {info['name']} ({info.get('country', '')})")
-                break
-    else:
-        print("✗ 无效选择，使用默认单个机场码模式")
-        cfcolo = "HKG"
     
     # 显示预设配置选项
     display_preset_configs()
@@ -1031,6 +788,204 @@ def handle_normal_mode():
         else:
             print("✗ 无效选择，请输入 1-4")
     
+        print(f"\n测速参数: 测试{dn_count}个IP, 速度下限{speed_limit}MB/s, 延迟上限{time_limit}ms")
+        print("模式: 反代IP列表测速")
+        
+        # 运行测速
+        run_speedtest_with_file("ips_ports.txt", dn_count, speed_limit, time_limit)
+        return None, None, None, None
+    else:
+        print("\n优选反代功能失败")
+        return None, None, None, None
+
+
+def handle_normal_mode():
+    """处理常规测速模式"""
+    print("\n开始检测可用地区...")
+    print("正在使用HTTPing模式检测各地区可用性...")
+    
+    # 先运行一次HTTPing检测，获取可用地区
+    available_regions = detect_available_regions()
+    
+    if not available_regions:
+        print("❌ 未检测到可用地区，请检查网络连接")
+        return None
+    
+    print(f"\n检测到 {len(available_regions)} 个可用地区:")
+    for i, (region_code, region_name, count) in enumerate(available_regions, 1):
+        print(f"  {i}. {region_code} - {region_name} (可用{count}个IP)")
+    
+    # 让用户选择地区
+    while True:
+        try:
+            choice = int(input(f"\n请选择地区 [1-{len(available_regions)}]: ").strip())
+            if 1 <= choice <= len(available_regions):
+                selected_region = available_regions[choice - 1]
+                cfcolo = selected_region[0]
+                region_name = selected_region[1]
+                count = selected_region[2]
+                print(f"✓ 已选择: {region_name} ({cfcolo}) - 可用{count}个IP")
+                break
+            else:
+                print(f"✗ 请输入 1-{len(available_regions)} 之间的数字")
+        except ValueError:
+            print("✗ 请输入有效的数字")
+    
+    # 显示预设配置选项
+    display_preset_configs()
+    
+    # 获取配置选择
+    while True:
+        config_choice = input("\n请选择配置 [1-4]: ").strip()
+        if config_choice == "1":
+            dn_count = "10"
+            speed_limit = "1"
+            time_limit = "1000"
+            print("✓ 快速测试: 10个IP, 1MB/s, 1000ms")
+            break
+        elif config_choice == "2":
+            dn_count = "20"
+            speed_limit = "5"
+            time_limit = "500"
+            print("✓ 标准测试: 20个IP, 5MB/s, 500ms")
+            break
+        elif config_choice == "3":
+            dn_count = "50"
+            speed_limit = "10"
+            time_limit = "200"
+            print("✓ 高质量测试: 50个IP, 10MB/s, 200ms")
+            break
+        elif config_choice == "4":
+            # 自定义配置
+            while True:
+                try:
+                    dn_count = input("请输入测试IP数量 [默认: 10]: ").strip()
+                    if not dn_count:
+                        dn_count = "10"
+                    dn_count_int = int(dn_count)
+                    if dn_count_int <= 0:
+                        print("✗ 请输入大于0的数字")
+                        continue
+                    if dn_count_int > 1000:
+                        print("警告: 测试数量过多，可能需要很长时间")
+                        confirm = input("  是否继续？[y/N]: ").strip().lower()
+                        if confirm != 'y':
+                            continue
+                    break
+                except ValueError:
+                    print("✗ 请输入有效的数字")
+            
+            # 获取下载速度下限
+            while True:
+                speed_limit = input("请输入下载速度下限 (MB/s) [默认: 1]: ").strip()
+                if not speed_limit:
+                    speed_limit = "1"
+                
+                try:
+                    speed_limit_float = float(speed_limit)
+                    if speed_limit_float < 0:
+                        print("✗ 请输入大于等于0的数字")
+                        continue
+                    if speed_limit_float > 100:
+                        print("警告: 速度阈值过高，可能找不到符合条件的IP")
+                        confirm = input("  是否继续？[y/N]: ").strip().lower()
+                        if confirm != 'y':
+                            continue
+                    break
+                except ValueError:
+                    print("✗ 请输入有效的数字")
+            
+            # 获取延迟阈值
+            while True:
+                time_limit = input("请输入延迟阈值 (ms) [默认: 1000]: ").strip()
+                if not time_limit:
+                    time_limit = "1000"
+                
+                try:
+                    time_limit_int = int(time_limit)
+                    if time_limit_int <= 0:
+                        print("✗ 请输入大于0的数字")
+                        continue
+                    if time_limit_int > 5000:
+                        print("警告: 延迟阈值过高，可能影响使用体验")
+                        confirm = input("  是否继续？[y/N]: ").strip().lower()
+                        if confirm != 'y':
+                            continue
+                    break
+                except ValueError:
+                    print("✗ 请输入有效的数字")
+            
+            print(f"✓ 自定义配置: {dn_count}个IP, {speed_limit}MB/s, {time_limit}ms")
+            break
+        else:
+            print("✗ 无效选择，请输入 1-4")
+    
+    print(f"\n测速参数: 地区={cfcolo}, 测试{dn_count}个IP, 速度下限{speed_limit}MB/s, 延迟上限{time_limit}ms")
+    print("模式: 常规测速（指定地区）")
+    
+    # 从地区扫描结果中提取该地区的IP进行测速
+    if os.path.exists("region_scan.csv"):
+        print(f"\n正在从扫描结果中提取 {cfcolo} 地区的IP...")
+        
+        # 读取该地区的IP
+        region_ips = []
+        with open("region_scan.csv", 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                colo = row.get('地区码', '').strip()
+                if colo == cfcolo:
+                    ip = row.get('IP 地址', '').strip()
+                    if ip:
+                        region_ips.append(ip)
+        
+        if region_ips:
+            # 创建该地区的IP文件
+            region_ip_file = f"{cfcolo.lower()}_ips.txt"
+            with open(region_ip_file, 'w', encoding='utf-8') as f:
+                for ip in region_ips:
+                    f.write(f"{ip}\n")
+            
+            print(f"找到 {len(region_ips)} 个 {cfcolo} 地区的IP，开始测速...")
+            
+            # 使用该地区的IP文件进行测速
+            os_type, arch_type = get_system_info()
+            exec_name = download_cloudflare_speedtest(os_type, arch_type)
+            
+            # 构建测速命令
+            if sys.platform == "win32":
+                cmd = [exec_name]
+            else:
+                cmd = [f"./{exec_name}"]
+            
+            cmd.extend([
+                "-f", region_ip_file,
+                "-dn", dn_count,
+                "-sl", speed_limit,
+                "-tl", time_limit,
+                "-httping",
+                "-url", "https://cf.xiu2.xyz/url",
+                "-o", "result.csv"
+            ])
+            
+            print(f"\n运行命令: {' '.join(cmd)}")
+            print("=" * 50)
+            
+            # 运行测速
+            result = subprocess.run(cmd)
+            
+            # 清理临时文件
+            if os.path.exists(region_ip_file):
+                os.remove(region_ip_file)
+            
+            if result.returncode == 0:
+                print("\n✅ 测速完成！结果已保存到 result.csv")
+            else:
+                print("\n❌ 测速失败")
+        else:
+            print(f"❌ 未找到 {cfcolo} 地区的IP")
+    else:
+        print("❌ 未找到地区扫描结果文件")
+    
     return cfcolo, dn_count, speed_limit, time_limit
 
 
@@ -1125,7 +1080,7 @@ def run_speedtest_with_file(ip_file, dn_count, speed_limit, time_limit):
         os_type, arch_type = get_system_info()
         exec_name = download_cloudflare_speedtest(os_type, arch_type)
         
-        # 构建命令（反代模式不需要机场码参数）
+        # 构建命令（反代模式使用TCPing，专注于端口信息）
         cmd = [
             f"./{exec_name}",
             "-f", ip_file,
@@ -1178,7 +1133,9 @@ def run_speedtest(exec_name, cfcolo, dn_count, speed_limit, time_limit):
         "-sl", speed_limit,
         "-tl", time_limit,
         "-cfcolo", cfcolo,
-        "-f", CLOUDFLARE_IP_FILE
+        "-f", CLOUDFLARE_IP_FILE,
+        "-httping",  # 使用HTTPing模式获取地区码
+        "-url", "https://cf.xiu2.xyz/url"  # 使用官方测速地址
     ])
     
     try:
@@ -1248,10 +1205,126 @@ def main():
     
     cfcolo, dn_count, speed_limit, time_limit = result
     
-    # 运行测速
-    print(f"\n[开始测速]")
-    return run_speedtest(exec_name, cfcolo, dn_count, speed_limit, time_limit)
+    # 常规测速模式已经在handle_normal_mode中完成测速
+    print(f"\n常规测速已完成")
+    return 0
 
+
+def detect_available_regions():
+    """检测可用地区"""
+    # 检查是否已有检测结果文件
+    if os.path.exists("region_scan.csv"):
+        print("发现已有的地区扫描结果文件")
+        choice = input("是否需要重新扫描？[y/N]: ").strip().lower()
+        if choice != 'y':
+            print("使用已有检测结果...")
+            # 直接读取已有文件
+            available_regions = []
+            region_counts = {}
+            
+            with open("region_scan.csv", 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    colo = row.get('地区码', '').strip()
+                    if colo and colo != 'N/A':
+                        region_counts[colo] = region_counts.get(colo, 0) + 1
+            
+            # 构建地区列表（按IP数量排序）
+            for colo, count in sorted(region_counts.items(), key=lambda x: x[1], reverse=True):
+                region_name = "未知地区"
+                for code, info in AIRPORT_CODES.items():
+                    if code == colo:
+                        region_name = f"{info.get('name', '')} ({info.get('country', '')})"
+                        break
+                available_regions.append((colo, region_name, count))
+            
+            return available_regions
+    
+    print("正在检测各地区可用性...")
+    
+    # 获取系统信息
+    os_type, arch_type = get_system_info()
+    exec_name = download_cloudflare_speedtest(os_type, arch_type)
+    
+    # 构建检测命令 - 使用HTTPing模式快速检测
+    if sys.platform == "win32":
+        cmd = [exec_name]
+    else:
+        cmd = [f"./{exec_name}"]
+    
+    cmd.extend([
+        "-dd",  # 禁用下载测速，只做延迟测试
+        "-tl", "9999",  # 高延迟阈值
+        "-f", CLOUDFLARE_IP_FILE,
+        "-httping",  # 使用HTTPing模式获取地区码
+        "-url", "https://cf.xiu2.xyz/url",
+        "-o", "region_scan.csv"  # 输出到地区扫描文件
+    ])
+    
+    try:
+        print("运行地区检测...")
+        print("正在扫描所有地区，请稍候（约需1-2分钟）...")
+        print("=" * 50)
+        
+        # 直接运行命令，显示完整输出
+        result = subprocess.run(cmd, timeout=120)
+        
+        if result.returncode == 0 and os.path.exists("region_scan.csv"):
+            # 读取检测结果
+            available_regions = []
+            region_counts = {}  # 统计每个地区的IP数量
+            
+            with open("region_scan.csv", 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    colo = row.get('地区码', '').strip()
+                    if colo and colo != 'N/A':
+                        # 统计IP数量
+                        if colo not in region_counts:
+                            region_counts[colo] = 0
+                        region_counts[colo] += 1
+            
+            # 构建地区列表（按IP数量排序）
+            for colo, count in sorted(region_counts.items(), key=lambda x: x[1], reverse=True):
+                # 查找地区名称
+                region_name = "未知地区"
+                for code, info in AIRPORT_CODES.items():
+                    if code == colo:
+                        region_name = f"{info.get('name', '')} ({info.get('country', '')})"
+                        break
+                available_regions.append((colo, region_name, count))
+            
+            # 保留地区扫描结果文件，不删除
+            print("地区扫描结果已保存到 region_scan.csv")
+            
+            return available_regions
+        else:
+            print("地区检测失败，使用默认地区列表")
+            # 返回默认的主要地区
+            default_regions = [
+                ('HKG', '香港 (中国)', 0),
+                ('SIN', '新加坡 (新加坡)', 0),
+                ('NRT', '东京 (日本)', 0),
+                ('ICN', '首尔 (韩国)', 0),
+                ('LAX', '洛杉矶 (美国)', 0),
+                ('FRA', '法兰克福 (德国)', 0),
+                ('LHR', '伦敦 (英国)', 0)
+            ]
+            return default_regions
+            
+    except Exception as e:
+        print(f"地区检测出错: {e}")
+        # 返回默认地区
+        default_regions = [
+            ('HKG', '香港 (中国)', 0),
+            ('SIN', '新加坡 (新加坡)', 0),
+            ('NRT', '东京 (日本)', 0),
+            ('ICN', '首尔 (韩国)', 0),
+            ('LAX', '洛杉矶 (美国)', 0),
+            ('FRA', '法兰克福 (德国)', 0),
+            ('LHR', '伦敦 (英国)', 0)
+        ]
+        return default_regions
 
 if __name__ == "__main__":
     try:

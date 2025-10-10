@@ -63,7 +63,9 @@ mac Linux
 ```bash
 chmod 755 可执行文件拽到终端回车
 可执行文件拽到终端回车
+如果还是不行 请执行sudo spctl --master-disable
 ```
+
 
 选择功能：
 ```

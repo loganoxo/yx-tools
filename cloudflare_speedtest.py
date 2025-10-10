@@ -308,7 +308,11 @@ def download_file(url, filename):
 def download_cloudflare_speedtest(os_type, arch_type):
     """下载 CloudflareSpeedTest 可执行文件（优先使用反代版本）"""
     # 优先检查反代版本
-    proxy_exec_name = f"CloudflareST_proxy_{os_type}_{arch_type}"
+    if os_type == "win":
+        proxy_exec_name = f"CloudflareST_proxy_{os_type}_{arch_type}.exe"
+    else:
+        proxy_exec_name = f"CloudflareST_proxy_{os_type}_{arch_type}"
+    
     if os.path.exists(proxy_exec_name):
         print(f"✓ 使用反代版本: {proxy_exec_name}")
         return proxy_exec_name
@@ -349,7 +353,11 @@ def download_cloudflare_speedtest(os_type, arch_type):
             print("="*60)
             
             # 检查是否有手动下载的反代版本文件
-            proxy_exec_name = f"CloudflareST_proxy_{os_type}_{arch_type}"
+            if os_type == "win":
+                proxy_exec_name = f"CloudflareST_proxy_{os_type}_{arch_type}.exe"
+            else:
+                proxy_exec_name = f"CloudflareST_proxy_{os_type}_{arch_type}"
+            
             if os.path.exists(proxy_exec_name):
                 print(f"找到手动下载的反代版本: {proxy_exec_name}")
                 # 手动下载的文件也需要赋予执行权限

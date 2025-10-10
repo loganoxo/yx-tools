@@ -434,10 +434,10 @@ def download_cloudflare_speedtest(os_type, arch_type):
     
     # 在Unix系统上赋予执行权限
     if os_type != "win":
-        os.chmod(exec_name, 0o755)
-        print(f"已赋予执行权限: {exec_name}")
+        os.chmod(proxy_exec_name, 0o755)
+        print(f"已赋予执行权限: {proxy_exec_name}")
     
-    return exec_name
+    return proxy_exec_name
 
 
 def download_cloudflare_ips():
@@ -698,112 +698,112 @@ def handle_proxy_mode():
         
         if test_choice in ['n', 'no']:
             print("跳过测速，优选反代功能完成")
-        return None, None, None, None
+            return None, None, None, None
 
         print("开始对反代IP列表进行测速...")
         print("注意: 反代模式直接对IP列表测速，不需要选择机场码")
-    
-    # 显示预设配置选项
-    display_preset_configs()
-    
-    # 获取配置选择
-    while True:
-        config_choice = input("\n请选择配置 [默认: 1]: ").strip()
-        if not config_choice:
-            config_choice = "1"
         
-        if config_choice == "1":
-            # 快速测试
-            dn_count = "10"
-            speed_limit = "1"
-            time_limit = "1000"
-            print("✓ 已选择: 快速测试 (10个IP, 1MB/s, 1000ms)")
-            break
-        elif config_choice == "2":
-            # 标准测试
-            dn_count = "20"
-            speed_limit = "2"
-            time_limit = "500"
-            print("✓ 已选择: 标准测试 (20个IP, 2MB/s, 500ms)")
-            break
-        elif config_choice == "3":
-            # 高质量测试
-            dn_count = "50"
-            speed_limit = "5"
-            time_limit = "200"
-            print("✓ 已选择: 高质量测试 (50个IP, 5MB/s, 200ms)")
-            break
-        elif config_choice == "4":
-            # 自定义配置
-            print("\n自定义配置:")
+        # 显示预设配置选项
+        display_preset_configs()
+        
+        # 获取配置选择
+        while True:
+            config_choice = input("\n请选择配置 [默认: 1]: ").strip()
+            if not config_choice:
+                config_choice = "1"
             
-            # 获取测试IP数量
-            while True:
-                dn_count = input("请输入要测试的 IP 数量 [默认: 10]: ").strip()
-                if not dn_count:
-                    dn_count = "10"
+            if config_choice == "1":
+                # 快速测试
+                dn_count = "10"
+                speed_limit = "1"
+                time_limit = "1000"
+                print("✓ 已选择: 快速测试 (10个IP, 1MB/s, 1000ms)")
+                break
+            elif config_choice == "2":
+                # 标准测试
+                dn_count = "20"
+                speed_limit = "2"
+                time_limit = "500"
+                print("✓ 已选择: 标准测试 (20个IP, 2MB/s, 500ms)")
+                break
+            elif config_choice == "3":
+                # 高质量测试
+                dn_count = "50"
+                speed_limit = "5"
+                time_limit = "200"
+                print("✓ 已选择: 高质量测试 (50个IP, 5MB/s, 200ms)")
+                break
+            elif config_choice == "4":
+                # 自定义配置
+                print("\n自定义配置:")
                 
-                try:
-                    dn_count_int = int(dn_count)
-                    if dn_count_int <= 0:
-                        print("✗ 请输入大于0的数字")
-                        continue
-                    if dn_count_int > 200:
-                        confirm = input(f"  警告: 测试 {dn_count_int} 个IP可能需要较长时间，是否继续？[y/N]: ").strip().lower()
-                        if confirm != 'y':
+                # 获取测试IP数量
+                while True:
+                    dn_count = input("请输入要测试的 IP 数量 [默认: 10]: ").strip()
+                    if not dn_count:
+                        dn_count = "10"
+                    
+                    try:
+                        dn_count_int = int(dn_count)
+                        if dn_count_int <= 0:
+                            print("✗ 请输入大于0的数字")
                             continue
-                    dn_count = str(dn_count_int)
-                    break
-                except ValueError:
-                    print("✗ 请输入有效的数字")
-            
-            # 获取下载速度下限
-            while True:
-                speed_limit = input("请输入下载速度下限 (MB/s) [默认: 1]: ").strip()
-                if not speed_limit:
-                    speed_limit = "1"
+                        if dn_count_int > 200:
+                            confirm = input(f"  警告: 测试 {dn_count_int} 个IP可能需要较长时间，是否继续？[y/N]: ").strip().lower()
+                            if confirm != 'y':
+                                continue
+                        dn_count = str(dn_count_int)
+                        break
+                    except ValueError:
+                        print("✗ 请输入有效的数字")
                 
-                try:
-                    speed_limit_float = float(speed_limit)
-                    if speed_limit_float < 0:
-                        print("✗ 请输入大于等于0的数字")
-                        continue
-                    if speed_limit_float > 100:
-                        print("警告: 速度阈值过高，可能找不到符合条件的IP")
-                        confirm = input("  是否继续？[y/N]: ").strip().lower()
-                        if confirm != 'y':
+                # 获取下载速度下限
+                while True:
+                    speed_limit = input("请输入下载速度下限 (MB/s) [默认: 1]: ").strip()
+                    if not speed_limit:
+                        speed_limit = "1"
+                    
+                    try:
+                        speed_limit_float = float(speed_limit)
+                        if speed_limit_float < 0:
+                            print("✗ 请输入大于等于0的数字")
                             continue
-                    speed_limit = str(speed_limit_float)
-                    break
-                except ValueError:
-                    print("✗ 请输入有效的数字")
-            
-            # 获取延迟阈值
-            while True:
-                time_limit = input("请输入延迟阈值 (ms) [默认: 1000]: ").strip()
-                if not time_limit:
-                    time_limit = "1000"
+                        if speed_limit_float > 100:
+                            print("警告: 速度阈值过高，可能找不到符合条件的IP")
+                            confirm = input("  是否继续？[y/N]: ").strip().lower()
+                            if confirm != 'y':
+                                continue
+                        speed_limit = str(speed_limit_float)
+                        break
+                    except ValueError:
+                        print("✗ 请输入有效的数字")
                 
-                try:
-                    time_limit_int = int(time_limit)
-                    if time_limit_int <= 0:
-                        print("✗ 请输入大于0的数字")
-                        continue
-                    if time_limit_int > 5000:
-                        print("警告: 延迟阈值过高，可能影响使用体验")
-                        confirm = input("  是否继续？[y/N]: ").strip().lower()
-                        if confirm != 'y':
+                # 获取延迟阈值
+                while True:
+                    time_limit = input("请输入延迟阈值 (ms) [默认: 1000]: ").strip()
+                    if not time_limit:
+                        time_limit = "1000"
+                    
+                    try:
+                        time_limit_int = int(time_limit)
+                        if time_limit_int <= 0:
+                            print("✗ 请输入大于0的数字")
                             continue
-                    time_limit = str(time_limit_int)
-                    break
-                except ValueError:
-                    print("✗ 请输入有效的数字")
-            
-            print(f"✓ 自定义配置: {dn_count}个IP, {speed_limit}MB/s, {time_limit}ms")
-            break
-        else:
-            print("✗ 无效选择，请输入 1-4")
-    
+                        if time_limit_int > 5000:
+                            print("警告: 延迟阈值过高，可能影响使用体验")
+                            confirm = input("  是否继续？[y/N]: ").strip().lower()
+                            if confirm != 'y':
+                                continue
+                        time_limit = str(time_limit_int)
+                        break
+                    except ValueError:
+                        print("✗ 请输入有效的数字")
+                
+                print(f"✓ 自定义配置: {dn_count}个IP, {speed_limit}MB/s, {time_limit}ms")
+                break
+            else:
+                print("✗ 无效选择，请输入 1-4")
+        
         print(f"\n测速参数: 测试{dn_count}个IP, 速度下限{speed_limit}MB/s, 延迟上限{time_limit}ms")
         print("模式: 反代IP列表测速")
         

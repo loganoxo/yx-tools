@@ -80,7 +80,80 @@ jobs:
         run: chmod +x dist/CloudflareSpeedTest-${{ matrix.platform }}-${{ matrix.arch }}
 
 
-      - name: 构建小白专用版
+      - name: 构建小白专用版 (Windows)
+        if: matrix.platform == 'windows'
+        shell: powershell
+        run: |
+          # 创建小白专用版目录
+          New-Item -ItemType Directory -Path "CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}" -Force
+          
+          # 复制主程序
+          Copy-Item "cloudflare_speedtest.py" "CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}/"
+          Copy-Item "requirements.txt" "CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}/"
+          Copy-Item "README.md" "CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}/"
+          
+          # 下载 Cloudflare IP 列表
+          Invoke-WebRequest -Uri "https://www.cloudflare.com/ips-v4/" -OutFile "CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}/Cloudflare.txt"
+          
+          # 下载对应的 CloudflareST_proxy 可执行文件
+          if ("${{ matrix.arch }}" -eq "amd64") {
+            Invoke-WebRequest -Uri "https://github.com/byJoey/CloudflareSpeedTest/releases/download/v1.0/CloudflareST_proxy_windows_amd64.zip" -OutFile "CloudflareST_proxy_windows_amd64.zip"
+            Expand-Archive -Path "CloudflareST_proxy_windows_amd64.zip" -DestinationPath "temp"
+            Copy-Item "temp/CloudflareST_proxy_windows_amd64.exe" "CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}/"
+          } else {
+            Invoke-WebRequest -Uri "https://github.com/byJoey/CloudflareSpeedTest/releases/download/v1.0/CloudflareST_proxy_windows_386.zip" -OutFile "CloudflareST_proxy_windows_386.zip"
+            Expand-Archive -Path "CloudflareST_proxy_windows_386.zip" -DestinationPath "temp"
+            Copy-Item "temp/CloudflareST_proxy_windows_386.exe" "CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}/"
+          }
+          
+          # 创建小白专用说明文件
+          $readmeContent = @"
+          # Cloudflare SpeedTest 小白专用版
+          
+          ## 🎯 专为新手设计
+          这是专门为小白用户准备的版本，包含了所有必要的文件，下载后即可直接使用！
+          
+          ## 📦 包含内容
+          - cloudflare_speedtest.py - 主程序
+          - CloudflareST_proxy_* - 测速工具（已配置好）
+          - Cloudflare.txt - IP列表
+          - requirements.txt - Python依赖
+          - 使用说明.txt - 详细使用说明
+          
+          ## 🚀 使用方法
+          
+          ### Windows 用户：
+          1. 双击运行 cloudflare_speedtest.py
+          2. 如果提示需要安装Python，请访问 https://www.python.org/downloads/
+          3. 安装时记得勾选"Add Python to PATH"
+          
+          ## 🎮 功能说明
+          - **选项1 - 小白快速测试**：最简单，只需要输入3个数字
+          - **选项2 - 常规测速**：适合有经验的用户
+          - **选项3 - 优选反代**：生成反代IP列表
+          
+          ## 💡 新手建议
+          - 第一次使用请选择"选项1 - 小白快速测试"
+          - 直接按回车使用默认设置
+          - 测试完成后查看 result.csv 文件
+          
+          ## 🆘 遇到问题？
+          - 确保网络连接正常
+          - 如果下载失败，请检查防火墙设置
+          - 更多帮助请访问：https://github.com/byJoey/CloudflareSpeedTest
+          
+          ---
+          版本：小白专用版
+          系统：${{ matrix.platform }} ${{ matrix.arch }}
+          "@
+          
+          $readmeContent | Out-File -FilePath "CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}/使用说明.txt" -Encoding UTF8
+          
+          # 创建压缩包
+          Compress-Archive -Path "CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}\*" -DestinationPath "CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}.zip"
+
+      - name: 构建小白专用版 (Linux/macOS)
+        if: matrix.platform != 'windows'
         run: |
           # 创建小白专用版目录
           mkdir -p CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}
@@ -94,17 +167,7 @@ jobs:
           curl -o CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}/Cloudflare.txt https://www.cloudflare.com/ips-v4/
           
           # 下载对应的 CloudflareST_proxy 可执行文件
-          if [ "${{ matrix.platform }}" = "windows" ]; then
-            if [ "${{ matrix.arch }}" = "amd64" ]; then
-              curl -L -o CloudflareST_proxy_windows_amd64.zip https://github.com/byJoey/CloudflareSpeedTest/releases/download/v1.0/CloudflareST_proxy_windows_amd64.zip
-              unzip CloudflareST_proxy_windows_amd64.zip
-              cp CloudflareST_proxy_windows_amd64.exe CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}/
-            else
-              curl -L -o CloudflareST_proxy_windows_386.zip https://github.com/byJoey/CloudflareSpeedTest/releases/download/v1.0/CloudflareST_proxy_windows_386.zip
-              unzip CloudflareST_proxy_windows_386.zip
-              cp CloudflareST_proxy_windows_386.exe CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}/
-            fi
-          elif [ "${{ matrix.platform }}" = "linux" ]; then
+          if [ "${{ matrix.platform }}" = "linux" ]; then
             curl -L -o CloudflareST_proxy_linux_amd64.tar.gz https://github.com/byJoey/CloudflareSpeedTest/releases/download/v1.0/CloudflareST_proxy_linux_amd64.tar.gz
             tar -xzf CloudflareST_proxy_linux_amd64.tar.gz
             cp CloudflareST_proxy_linux_amd64 CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}/
@@ -139,11 +202,6 @@ jobs:
           
           ## 🚀 使用方法
           
-          ### Windows 用户：
-          1. 双击运行 cloudflare_speedtest.py
-          2. 如果提示需要安装Python，请访问 https://www.python.org/downloads/
-          3. 安装时记得勾选"Add Python to PATH"
-          
           ### macOS/Linux 用户：
           1. 打开终端，进入此目录
           2. 运行：python3 cloudflare_speedtest.py
@@ -170,11 +228,7 @@ jobs:
           EOF
           
           # 创建压缩包
-          if [ "${{ matrix.platform }}" = "windows" ]; then
-            powershell Compress-Archive -Path "CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}\*" -DestinationPath "CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}.zip"
-          else
-            tar -czf CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}/
-          fi
+          tar -czf CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz CloudflareSpeedTest-小白专用版-${{ matrix.platform }}-${{ matrix.arch }}/
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4

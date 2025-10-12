@@ -618,15 +618,19 @@ def get_user_input():
     print("\n" + "=" * 60)
     print(" 功能选择")
     print("=" * 60)
-    print("  1. 常规测速 - 测试指定机场码的IP速度")
-    print("  2. 优选反代 - 从CSV文件生成反代IP列表")
+    print("  1. 小白快速测试 - 简单输入，适合新手")
+    print("  2. 常规测速 - 测试指定机场码的IP速度")
+    print("  3. 优选反代 - 从CSV文件生成反代IP列表")
     print("=" * 60)
     
     choice = input("\n请选择功能 [默认: 1]: ").strip()
     if not choice:
         choice = "1"
     
-    if choice == "2":
+    if choice == "1":
+        # 小白快速测试模式
+        return handle_beginner_mode()
+    elif choice == "3":
         # 优选反代模式
         return handle_proxy_mode()
     else:
@@ -813,6 +817,129 @@ def handle_proxy_mode():
     else:
         print("\n优选反代功能失败")
         return None, None, None, None
+
+
+def handle_beginner_mode():
+    """处理小白快速测试模式"""
+    print("\n" + "=" * 70)
+    print(" 小白快速测试模式")
+    print("=" * 70)
+    print(" 此功能专为新手设计，只需要输入3个简单的数字即可开始测试")
+    print(" 无需了解复杂的参数设置，程序会引导您完成所有配置")
+    print("=" * 70)
+    
+    # 获取测试IP数量
+    print("\n📊 第一步：设置测试IP数量")
+    print("说明：测试的IP数量越多，结果越准确，但耗时越长")
+    while True:
+        dn_count = input("请输入要测试的IP数量 [默认: 10]: ").strip()
+        if not dn_count:
+            dn_count = "10"
+        try:
+            dn_count_int = int(dn_count)
+            if dn_count_int <= 0:
+                print("✗ 请输入大于0的数字")
+                continue
+            if dn_count_int > 100:
+                print("⚠️  测试数量较多，可能需要较长时间")
+                confirm = input("  是否继续？[y/N]: ").strip().lower()
+                if confirm != 'y':
+                    continue
+            dn_count = str(dn_count_int)
+            break
+        except ValueError:
+            print("✗ 请输入有效的数字")
+    
+    # 获取延迟阈值
+    print(f"\n⏱️  第二步：设置延迟上限")
+    print("说明：延迟越低，网络响应越快。一般建议100-1000ms")
+    while True:
+        time_limit = input("请输入延迟上限(ms) [默认: 1000]: ").strip()
+        if not time_limit:
+            time_limit = "1000"
+        try:
+            time_limit_int = int(time_limit)
+            if time_limit_int <= 0:
+                print("✗ 请输入大于0的数字")
+                continue
+            if time_limit_int > 5000:
+                print("⚠️  延迟阈值过高，可能影响使用体验")
+                confirm = input("  是否继续？[y/N]: ").strip().lower()
+                if confirm != 'y':
+                    continue
+            time_limit = str(time_limit_int)
+            break
+        except ValueError:
+            print("✗ 请输入有效的数字")
+    
+    # 获取下载速度下限
+    print(f"\n🚀 第三步：设置下载速度下限")
+    print("说明：速度越高，网络越快。一般建议1-10MB/s")
+    while True:
+        speed_limit = input("请输入下载速度下限(MB/s) [默认: 1]: ").strip()
+        if not speed_limit:
+            speed_limit = "1"
+        try:
+            speed_limit_float = float(speed_limit)
+            if speed_limit_float < 0:
+                print("✗ 请输入大于等于0的数字")
+                continue
+            if speed_limit_float > 50:
+                print("⚠️  速度阈值过高，可能找不到符合条件的IP")
+                confirm = input("  是否继续？[y/N]: ").strip().lower()
+                if confirm != 'y':
+                    continue
+            speed_limit = str(speed_limit_float)
+            break
+        except ValueError:
+            print("✗ 请输入有效的数字")
+    
+    print(f"\n✅ 配置完成！")
+    print(f"📋 测试参数:")
+    print(f"   - 测试IP数量: {dn_count} 个")
+    print(f"   - 延迟上限: {time_limit} ms")
+    print(f"   - 速度下限: {speed_limit} MB/s")
+    print("=" * 50)
+    
+    print(f"\n🎯 开始测速...")
+    print(f"参数: 测试{dn_count}个IP, 速度下限{speed_limit}MB/s, 延迟上限{time_limit}ms")
+    print("模式: 小白快速测试（全自动，无需选择地区）")
+    
+    # 直接使用 Cloudflare IP 列表进行测速
+    print(f"\n正在使用 Cloudflare IP 列表进行测速...")
+    
+    # 获取系统信息和可执行文件
+    os_type, arch_type = get_system_info()
+    exec_name = download_cloudflare_speedtest(os_type, arch_type)
+    
+    # 构建测速命令
+    if sys.platform == "win32":
+        cmd = [exec_name]
+    else:
+        cmd = [f"./{exec_name}"]
+    
+    cmd.extend([
+        "-f", CLOUDFLARE_IP_FILE,
+        "-dn", dn_count,
+        "-sl", speed_limit,
+        "-tl", time_limit,
+        "-o", "result.csv"
+    ])
+    
+    print(f"\n运行命令: {' '.join(cmd)}")
+    print("=" * 50)
+    
+    # 运行测速
+    result = subprocess.run(cmd)
+    
+    if result.returncode == 0:
+        print("\n✅ 测速完成！结果已保存到 result.csv")
+        print("📊 您可以查看 result.csv 文件来了解详细的测试结果")
+        print("💡 提示：结果文件中的IP按速度从快到慢排序")
+    else:
+        print("\n❌ 测速失败")
+    
+    return "ALL", dn_count, speed_limit, time_limit
 
 
 def handle_normal_mode():

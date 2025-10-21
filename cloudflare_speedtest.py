@@ -14,6 +14,7 @@ import requests
 import json
 import csv
 from pathlib import Path
+from datetime import datetime
 
 
 # Cloudflare 数据中心完整机场码映射
@@ -162,6 +163,9 @@ CLOUDFLARE_IP_FILE = "Cloudflare.txt"
 # GitHub Release版本 - 使用官方CloudflareSpeedTest
 GITHUB_VERSION = "v2.3.4"
 GITHUB_REPO = "XIU2/CloudflareSpeedTest"
+
+# 配置文件路径
+CONFIG_FILE = ".cloudflare_speedtest_config.json"
 
 
 def get_system_info():
@@ -812,7 +816,12 @@ def handle_proxy_mode():
         print("模式: 反代IP列表测速")
         
         # 运行测速
-        run_speedtest_with_file("ips_ports.txt", dn_count, speed_limit, time_limit)
+        result_code = run_speedtest_with_file("ips_ports.txt", dn_count, speed_limit, time_limit)
+        
+        # 如果测速成功，询问是否上报结果
+        if result_code == 0 and os.path.exists("result.csv"):
+            upload_results_to_api("result.csv")
+        
         return None, None, None, None
     else:
         print("\n优选反代功能失败")
@@ -936,6 +945,9 @@ def handle_beginner_mode():
         print("\n✅ 测速完成！结果已保存到 result.csv")
         print("📊 您可以查看 result.csv 文件来了解详细的测试结果")
         print("💡 提示：结果文件中的IP按速度从快到慢排序")
+        
+        # 询问是否上报结果
+        upload_results_to_api("result.csv")
     else:
         print("\n❌ 测速失败")
     
@@ -1120,6 +1132,9 @@ def handle_normal_mode():
             
             if result.returncode == 0:
                 print("\n✅ 测速完成！结果已保存到 result.csv")
+                
+                # 询问是否上报结果
+                upload_results_to_api("result.csv")
             else:
                 print("\n❌ 测速失败")
         else:
@@ -1346,6 +1361,417 @@ def main():
     # 常规测速模式已经在handle_normal_mode中完成测速
     print(f"\n常规测速已完成")
     return 0
+
+
+def load_config():
+    """从配置文件加载上次保存的配置"""
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                return config
+        except Exception as e:
+            print(f"⚠️  读取配置文件失败: {e}")
+            return None
+    return None
+
+
+def save_config(worker_domain, uuid):
+    """保存配置到文件"""
+    try:
+        config = {
+            "worker_domain": worker_domain,
+            "uuid": uuid,
+            "last_used": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        print(f"⚠️  保存配置失败: {e}")
+        return False
+
+
+def clear_config():
+    """清除保存的配置"""
+    try:
+        if os.path.exists(CONFIG_FILE):
+            os.remove(CONFIG_FILE)
+            print("✅ 已清除保存的配置")
+            return True
+    except Exception as e:
+        print(f"⚠️  清除配置失败: {e}")
+        return False
+
+
+def upload_results_to_api(result_file="result.csv"):
+    """上报优选结果到 Cloudflare Workers API"""
+    print("\n" + "=" * 70)
+    print(" 优选结果上报功能")
+    print("=" * 70)
+    print(" 此功能可以将测速结果上报到您的 Cloudflare Workers API")
+    print(" 需要提供您的 Worker 域名和 UUID")
+    print("=" * 70)
+    
+    # 询问是否上报
+    choice = input("\n是否要上报优选结果？[y/N]: ").strip().lower()
+    if choice not in ['y', 'yes']:
+        print("跳过上报")
+        return
+    
+    # 检查结果文件是否存在
+    if not os.path.exists(result_file):
+        print(f"❌ 未找到测速结果文件: {result_file}")
+        print("请先完成测速后再上报结果")
+        return
+    
+    # 尝试加载保存的配置
+    saved_config = load_config()
+    worker_domain = None
+    uuid = None
+    
+    if saved_config:
+        saved_domain = saved_config.get('worker_domain', '')
+        saved_uuid = saved_config.get('uuid', '')
+        last_used = saved_config.get('last_used', '未知')
+        
+        print(f"\n💾 检测到上次使用的配置:")
+        print(f"   Worker 域名: {saved_domain}")
+        print(f"   UUID: {saved_uuid}")
+        print(f"   上次使用: {last_used}")
+        print("\n是否使用上次的配置？")
+        print("  1. 是 - 使用上次配置")
+        print("  2. 否 - 输入新的URL")
+        print("  3. 清除配置 - 删除保存的配置")
+        
+        while True:
+            config_choice = input("\n请选择 [1/2/3]: ").strip()
+            if config_choice == "1":
+                worker_domain = saved_domain
+                uuid = saved_uuid
+                print(f"\n✅ 使用保存的配置")
+                print(f"   Worker 域名: {worker_domain}")
+                print(f"   UUID: {uuid}")
+                # 更新最后使用时间
+                save_config(worker_domain, uuid)
+                break
+            elif config_choice == "2":
+                print("\n请输入新的配置...")
+                break
+            elif config_choice == "3":
+                clear_config()
+                print("请重新输入配置...")
+                break
+            else:
+                print("✗ 请输入 1、2 或 3")
+    
+    # 如果没有使用保存的配置，则获取新的URL
+    if not worker_domain or not uuid:
+        # 获取管理页面 URL
+        print("\n📝 请输入您的 Worker 管理页面 URL")
+        print("示例: https://你的域名/你的UUID")
+        print("提示: 直接复制浏览器地址栏的完整URL即可")
+        
+        management_url = input("\n管理页面 URL: ").strip()
+        if not management_url:
+            print("❌ URL 不能为空")
+            return
+    
+        # 解析 URL，提取域名和 UUID
+        try:
+            import re
+            from urllib.parse import urlparse
+            
+            # 移除可能的协议前缀和尾部斜杠
+            management_url = management_url.strip().rstrip('/')
+            
+            # 如果没有协议前缀，添加 https://
+            if not management_url.startswith(('http://', 'https://')):
+                management_url = 'https://' + management_url
+            
+            # 解析 URL
+            parsed = urlparse(management_url)
+            worker_domain = parsed.netloc
+            
+            # 从路径中提取 UUID
+            # UUID 格式：8-4-4-4-12 (例如: 351c9981-04b6-4103-aa4b-864aa9c91469)
+            uuid_pattern = r'([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})'
+            uuid_match = re.search(uuid_pattern, parsed.path, re.IGNORECASE)
+            
+            if not worker_domain:
+                print("❌ 无法解析域名，请检查 URL 格式")
+                return
+            
+            if not uuid_match:
+                print("❌ 无法从 URL 中提取 UUID")
+                print("   请确保 URL 包含完整的 UUID")
+                print("   格式示例: https://域名/UUID")
+                return
+            
+            uuid = uuid_match.group(1)
+            
+            # 显示解析结果
+            print(f"\n✅ 成功解析配置:")
+            print(f"   Worker 域名: {worker_domain}")
+            print(f"   UUID: {uuid}")
+            
+            # 询问是否保存配置
+            save_choice = input("\n是否保存此配置供下次使用？[Y/n]: ").strip().lower()
+            if save_choice not in ['n', 'no']:
+                if save_config(worker_domain, uuid):
+                    print("✅ 配置已保存")
+                else:
+                    print("⚠️  配置保存失败，但不影响本次上报")
+            
+        except Exception as e:
+            print(f"❌ URL 解析失败: {e}")
+            print("   请检查 URL 格式是否正确")
+            return
+    
+    # 构建 API URL
+    api_url = f"https://{worker_domain}/{uuid}/api/preferred-ips"
+    
+    # 检查是否已有数据
+    print("\n🔍 正在检查现有优选IP...")
+    try:
+        response = requests.get(api_url, timeout=10)
+        if response.status_code == 200:
+            result = response.json()
+            existing_count = result.get('count', 0)
+            if existing_count > 0:
+                print(f"⚠️  发现已存在 {existing_count} 个优选IP")
+                print("\n是否要清空现有数据后再添加新的？")
+                print("  1. 是 - 清空后添加（推荐，避免重复）")
+                print("  2. 否 - 直接添加（可能有重复提示）")
+                
+                while True:
+                    clear_choice = input("\n请选择 [1/2]: ").strip()
+                    if clear_choice == "1":
+                        print("准备清空现有数据...")
+                        should_clear = True
+                        break
+                    elif clear_choice == "2":
+                        print("将直接添加，跳过清空")
+                        should_clear = False
+                        break
+                    else:
+                        print("✗ 请输入 1 或 2")
+            else:
+                should_clear = False
+                print("✅ 当前无数据，将直接添加")
+        else:
+            should_clear = False
+            print("⚠️  无法获取现有数据状态，将直接尝试添加")
+    except Exception as e:
+        should_clear = False
+        print(f"⚠️  检查现有数据失败: {e}")
+        print("将继续尝试添加...")
+    
+    # 读取测速结果
+    print("\n📊 正在读取测速结果...")
+    try:
+        best_ips = []
+        with open(result_file, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                ip = row.get('IP 地址', '').strip()
+                port = row.get('端口', '').strip()
+                
+                # 尝试多种可能的列名来获取速度
+                speed = ''
+                for speed_key in ['下载速度(MB/s)', '下载速度 (MB/s)', '下载速度']:
+                    if speed_key in row:
+                        speed = row[speed_key].strip()
+                        break
+                
+                # 尝试多种可能的列名来获取延迟
+                latency = ''
+                for latency_key in ['平均延迟', '延迟', 'latency']:
+                    if latency_key in row:
+                        latency = row[latency_key].strip()
+                        break
+                
+                # 获取地区码
+                region_code = row.get('地区码', '').strip()
+                
+                # 如果IP地址中包含端口信息
+                if ip and ':' in ip:
+                    ip_parts = ip.split(':')
+                    if len(ip_parts) == 2:
+                        ip = ip_parts[0]
+                        if not port:
+                            port = ip_parts[1]
+                
+                # 设置默认端口
+                if not port:
+                    port = '443'
+                
+                if ip:
+                    try:
+                        speed_val = float(speed) if speed else 0
+                        latency_val = latency if latency else 'N/A'
+                        
+                        # 获取地区中文名称
+                        region_name = '未知地区'
+                        if region_code and region_code in AIRPORT_CODES:
+                            region_name = AIRPORT_CODES[region_code].get('name', region_code)
+                        elif region_code:
+                            region_name = region_code
+                        
+                        best_ips.append({
+                            'ip': ip,
+                            'port': int(port),
+                            'speed': speed_val,
+                            'latency': latency_val,
+                            'region_code': region_code,
+                            'region_name': region_name
+                        })
+                    except ValueError:
+                        continue
+        
+        if not best_ips:
+            print("❌ 未找到有效的测速结果")
+            return
+        
+        print(f"✅ 找到 {len(best_ips)} 个测速结果")
+        
+        # 询问要上报多少个结果
+        while True:
+            count_input = input(f"\n请输入要上报的IP数量 [默认: 10, 最多: {len(best_ips)}]: ").strip()
+            if not count_input:
+                upload_count = min(10, len(best_ips))
+                break
+            try:
+                upload_count = int(count_input)
+                if upload_count <= 0:
+                    print("✗ 请输入大于0的数字")
+                    continue
+                if upload_count > len(best_ips):
+                    print(f"⚠️  最多只能上报 {len(best_ips)} 个结果")
+                    upload_count = len(best_ips)
+                break
+            except ValueError:
+                print("✗ 请输入有效的数字")
+        
+        # 显示将要上报的IP
+        print(f"\n将上报以下 {upload_count} 个优选IP:")
+        print("-" * 70)
+        for i, ip_info in enumerate(best_ips[:upload_count], 1):
+            region_display = f"{ip_info['region_name']}" if ip_info.get('region_name') else '未知地区'
+            print(f"  {i:2d}. {ip_info['ip']:15s}:{ip_info['port']:<5d} - {ip_info['speed']:.2f} MB/s - {region_display} - 延迟: {ip_info['latency']}")
+        print("-" * 70)
+        
+        # 确认上报
+        confirm = input("\n确认上报以上IP？[Y/n]: ").strip().lower()
+        if confirm in ['n', 'no']:
+            print("取消上报")
+            return
+        
+        # 如果需要清空，先执行清空操作
+        if should_clear:
+            print("\n🗑️  正在清空现有数据...")
+            try:
+                delete_response = requests.delete(
+                    api_url,
+                    json={"all": True},
+                    headers={"Content-Type": "application/json"},
+                    timeout=10
+                )
+                if delete_response.status_code == 200:
+                    print("✅ 现有数据已清空")
+                else:
+                    print(f"⚠️  清空失败 (HTTP {delete_response.status_code})，继续尝试添加...")
+            except Exception as e:
+                print(f"⚠️  清空操作失败: {e}，继续尝试添加...")
+        
+        # 构建批量上报数据
+        print("\n🚀 开始批量上报优选IP...")
+        batch_data = []
+        for ip_info in best_ips[:upload_count]:
+            # 构建节点名称：地区名-速度MB/s
+            region_name = ip_info.get('region_name', '未知地区')
+            speed = ip_info['speed']
+            name = f"{region_name}-{speed:.2f}MB/s"
+            
+            batch_data.append({
+                "ip": ip_info['ip'],
+                "port": ip_info['port'],
+                "name": name
+            })
+        
+        # 发送批量POST请求
+        try:
+            response = requests.post(
+                api_url,
+                json=batch_data,
+                headers={"Content-Type": "application/json"},
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get('success'):
+                    success_count = result.get('added', 0)
+                    fail_count = result.get('failed', 0)
+                    skipped_count = result.get('skipped', 0)
+                    
+                    print("✅ 批量上报完成！")
+                    print(f"   成功添加: {success_count} 个")
+                    if skipped_count > 0:
+                        print(f"   跳过重复: {skipped_count} 个")
+                    if fail_count > 0:
+                        print(f"   失败: {fail_count} 个")
+                else:
+                    print(f"❌ 批量上报失败: {result.get('error', '未知错误')}")
+                    success_count = 0
+                    fail_count = upload_count
+            elif response.status_code == 403:
+                print(f"❌ 认证失败！请检查：")
+                print(f"   1. UUID 是否正确")
+                print(f"   2. 是否在配置页面开启了 'API管理' 功能")
+                success_count = 0
+                fail_count = upload_count
+            else:
+                print(f"❌ 批量上报失败 (HTTP {response.status_code})")
+                try:
+                    error_detail = response.json()
+                    print(f"   错误详情: {error_detail.get('error', '无详情')}")
+                except:
+                    pass
+                success_count = 0
+                fail_count = upload_count
+                
+        except requests.exceptions.Timeout:
+            print(f"❌ 请求超时，请检查网络连接")
+            success_count = 0
+            fail_count = upload_count
+        except requests.exceptions.RequestException as e:
+            print(f"❌ 网络错误: {e}")
+            success_count = 0
+            fail_count = upload_count
+        
+        # 显示统计信息
+        print("\n" + "=" * 70)
+        print(" 批量上报完成！")
+        print("=" * 70)
+        print(f"  ✅ 成功添加: {success_count} 个")
+        if 'skipped_count' in locals() and skipped_count > 0:
+            print(f"  ⚠️  跳过重复: {skipped_count} 个")
+        if fail_count > 0:
+            print(f"  ❌ 失败: {fail_count} 个")
+        print(f"  📊 总计: {upload_count} 个")
+        print("=" * 70)
+        
+        if success_count > 0:
+            print(f"\n💡 提示:")
+            print(f"   - 您可以访问 https://{worker_domain}/{uuid} 查看管理页面")
+            print(f"   - 优选IP已添加，订阅生成时会自动使用")
+            print(f"   - 批量上报速度更快，避免了逐个请求的超时问题")
+        
+    except Exception as e:
+        print(f"❌ 读取测速结果失败: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 def detect_available_regions():

@@ -17,6 +17,70 @@ from pathlib import Path
 from datetime import datetime
 
 
+# 使用curl的备用HTTP请求函数（解决SSL模块不可用的问题）
+def curl_request(url, method='GET', data=None, headers=None, timeout=30):
+    """
+    使用curl命令进行HTTP请求（当requests的SSL模块不可用时使用）
+    
+    Args:
+        url: 请求的URL
+        method: HTTP方法（GET, POST, DELETE等）
+        data: 请求数据（将被转换为JSON）
+        headers: 请求头字典
+        timeout: 超时时间（秒）
+    
+    Returns:
+        dict: 包含status_code、json、text等属性的响应对象模拟
+    """
+    cmd = ['curl', '-s', '-w', '\\n%{http_code}', '-X', method, '--connect-timeout', str(timeout)]
+    
+    # 添加请求头
+    if headers:
+        for key, value in headers.items():
+            cmd.extend(['-H', f'{key}: {value}'])
+    
+    # 添加请求数据
+    if data:
+        json_data = json.dumps(data)
+        cmd.extend(['-d', json_data])
+    
+    # 添加URL
+    cmd.append(url)
+    
+    try:
+        # 执行curl命令
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        output = result.stdout
+        
+        # 分离响应体和状态码
+        lines = output.strip().split('\n')
+        if len(lines) >= 1:
+            status_code = int(lines[-1])
+            response_text = '\n'.join(lines[:-1])
+        else:
+            status_code = 0
+            response_text = output
+        
+        # 创建响应对象模拟
+        class CurlResponse:
+            def __init__(self, status_code, text):
+                self.status_code = status_code
+                self.text = text
+                self._json = None
+            
+            def json(self):
+                if self._json is None:
+                    self._json = json.loads(self.text) if self.text else {}
+                return self._json
+        
+        return CurlResponse(status_code, response_text)
+    
+    except subprocess.TimeoutExpired:
+        raise Exception("请求超时")
+    except Exception as e:
+        raise Exception(f"curl请求失败: {e}")
+
+
 # Cloudflare 数据中心完整机场码映射
 # 数据来源：Cloudflare 官方数据中心列表
 AIRPORT_CODES = {
@@ -212,17 +276,30 @@ def download_file(url, filename):
     """下载文件 - 支持多种下载方法"""
     print(f"正在下载: {url}")
     
-    # 方法1: 尝试使用 requests
+    # 方法1: 尝试使用 requests（SSL不可用时静默切换到curl）
     try:
-        response = requests.get(url, stream=True, timeout=60)
-        response.raise_for_status()
-        
-        with open(filename, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-        
-        print(f"✅ 下载完成: {filename}")
-        return True
+        try:
+            response = requests.get(url, stream=True, timeout=60)
+            response.raise_for_status()
+            
+            with open(filename, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            
+            print(f"✅ 下载完成: {filename}")
+            return True
+        except ImportError as e:
+            # SSL模块不可用，静默切换到curl下载
+            if "SSL module is not available" in str(e):
+                result = subprocess.run([
+                    "curl", "-L", "-o", filename, url
+                ], capture_output=True, text=True, timeout=60)
+                
+                if result.returncode == 0 and os.path.exists(filename):
+                    print(f"✅ 下载完成: {filename}")
+                    return True
+            else:
+                raise
     except Exception:
         # 静默失败，继续尝试其他方法
         pass
@@ -291,15 +368,28 @@ def download_file(url, filename):
     if url.startswith("https://"):
         http_url = url.replace("https://", "http://")
         try:
-            response = requests.get(http_url, stream=True, timeout=60)
-            response.raise_for_status()
-            
-            with open(filename, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            
-            print(f"✅ 下载完成: {filename}")
-            return True
+            try:
+                response = requests.get(http_url, stream=True, timeout=60)
+                response.raise_for_status()
+                
+                with open(filename, "wb") as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                
+                print(f"✅ 下载完成: {filename}")
+                return True
+            except ImportError as e:
+                # SSL模块不可用，静默切换到curl下载
+                if "SSL module is not available" in str(e):
+                    result = subprocess.run([
+                        "curl", "-L", "-o", filename, http_url
+                    ], capture_output=True, text=True, timeout=60)
+                    
+                    if result.returncode == 0 and os.path.exists(filename):
+                        print(f"✅ 下载完成: {filename}")
+                        return True
+                else:
+                    raise
         except Exception:
             # HTTP 下载失败，静默继续
             pass
@@ -1534,7 +1624,15 @@ def upload_results_to_api(result_file="result.csv"):
     # 检查是否已有数据
     print("\n🔍 正在检查现有优选IP...")
     try:
-        response = requests.get(api_url, timeout=10)
+        try:
+            response = requests.get(api_url, timeout=10)
+        except ImportError as e:
+            # SSL模块不可用，静默切换到curl
+            if "SSL module is not available" in str(e):
+                response = curl_request(api_url, method='GET', timeout=10)
+            else:
+                raise
+        
         if response.status_code == 200:
             result = response.json()
             existing_count = result.get('count', 0)
@@ -1671,12 +1769,26 @@ def upload_results_to_api(result_file="result.csv"):
         if should_clear:
             print("\n🗑️  正在清空现有数据...")
             try:
-                delete_response = requests.delete(
-                    api_url,
-                    json={"all": True},
-                    headers={"Content-Type": "application/json"},
-                    timeout=10
-                )
+                try:
+                    delete_response = requests.delete(
+                        api_url,
+                        json={"all": True},
+                        headers={"Content-Type": "application/json"},
+                        timeout=10
+                    )
+                except ImportError as e:
+                    # SSL模块不可用，静默切换到curl
+                    if "SSL module is not available" in str(e):
+                        delete_response = curl_request(
+                            api_url,
+                            method='DELETE',
+                            data={"all": True},
+                            headers={"Content-Type": "application/json"},
+                            timeout=10
+                        )
+                    else:
+                        raise
+                
                 if delete_response.status_code == 200:
                     print("✅ 现有数据已清空")
                 else:
@@ -1700,15 +1812,36 @@ def upload_results_to_api(result_file="result.csv"):
             })
         
         # 发送批量POST请求
+        use_curl_fallback = False
+        response = None
+        success_count = 0
+        fail_count = 0
+        skipped_count = 0
+        
         try:
-            response = requests.post(
-                api_url,
-                json=batch_data,
-                headers={"Content-Type": "application/json"},
-                timeout=30
-            )
+            try:
+                response = requests.post(
+                    api_url,
+                    json=batch_data,
+                    headers={"Content-Type": "application/json"},
+                    timeout=30
+                )
+            except ImportError as e:
+                # SSL模块不可用，静默切换到curl备用方案
+                if "SSL module is not available" in str(e):
+                    use_curl_fallback = True
+                    response = curl_request(
+                        api_url,
+                        method='POST',
+                        data=batch_data,
+                        headers={"Content-Type": "application/json"},
+                        timeout=30
+                    )
+                else:
+                    raise
             
-            if response.status_code == 200:
+            # 处理响应
+            if response and response.status_code == 200:
                 result = response.json()
                 if result.get('success'):
                     success_count = result.get('added', 0)
@@ -1723,31 +1856,29 @@ def upload_results_to_api(result_file="result.csv"):
                         print(f"   失败: {fail_count} 个")
                 else:
                     print(f"❌ 批量上报失败: {result.get('error', '未知错误')}")
-                    success_count = 0
                     fail_count = upload_count
-            elif response.status_code == 403:
+            elif response and response.status_code == 403:
                 print(f"❌ 认证失败！请检查：")
                 print(f"   1. UUID 是否正确")
                 print(f"   2. 是否在配置页面开启了 'API管理' 功能")
-                success_count = 0
                 fail_count = upload_count
-            else:
+            elif response:
                 print(f"❌ 批量上报失败 (HTTP {response.status_code})")
                 try:
                     error_detail = response.json()
                     print(f"   错误详情: {error_detail.get('error', '无详情')}")
                 except:
                     pass
-                success_count = 0
                 fail_count = upload_count
                 
         except requests.exceptions.Timeout:
             print(f"❌ 请求超时，请检查网络连接")
-            success_count = 0
             fail_count = upload_count
         except requests.exceptions.RequestException as e:
             print(f"❌ 网络错误: {e}")
-            success_count = 0
+            fail_count = upload_count
+        except Exception as e:
+            print(f"❌ 请求失败: {e}")
             fail_count = upload_count
         
         # 显示统计信息

@@ -48,8 +48,8 @@ def curl_request(url, method='GET', data=None, headers=None, timeout=30):
     cmd.append(url)
     
     try:
-        # 执行curl命令
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        # 执行curl命令，指定编码为utf-8
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=timeout)
         output = result.stdout
         
         # 分离响应体和状态码
@@ -76,7 +76,11 @@ def curl_request(url, method='GET', data=None, headers=None, timeout=30):
         return CurlResponse(status_code, response_text)
     
     except subprocess.TimeoutExpired:
-        raise Exception("请求超时")
+        raise Exception("请求超时，请检查网络连接")
+    except subprocess.CalledProcessError as e:
+        raise Exception(f"curl命令执行失败: {e}")
+    except FileNotFoundError:
+        raise Exception("curl命令未找到，请确保系统已安装curl")
     except Exception as e:
         raise Exception(f"curl请求失败: {e}")
 
@@ -424,7 +428,7 @@ def download_file(url, filename):
             if "SSL module is not available" in str(e):
                 result = subprocess.run([
                     "curl", "-L", "-o", filename, url
-                ], capture_output=True, text=True, timeout=60)
+                ], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60)
                 
                 if result.returncode == 0 and os.path.exists(filename):
                     print(f"✅ 下载完成: {filename}")
@@ -439,7 +443,7 @@ def download_file(url, filename):
     try:
         result = subprocess.run([
             "wget", "-O", filename, url
-        ], capture_output=True, text=True, timeout=60)
+        ], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60)
         
         if result.returncode == 0 and os.path.exists(filename):
             print(f"✅ 下载完成: {filename}")
@@ -455,7 +459,7 @@ def download_file(url, filename):
     try:
         result = subprocess.run([
             "curl", "-L", "-o", filename, url
-        ], capture_output=True, text=True, timeout=60)
+        ], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60)
         
         if result.returncode == 0 and os.path.exists(filename):
             print(f"✅ 下载完成: {filename}")
@@ -473,7 +477,7 @@ def download_file(url, filename):
             ps_cmd = f'Invoke-WebRequest -Uri "{url}" -OutFile "{filename}"'
             result = subprocess.run([
                 "powershell", "-Command", ps_cmd
-            ], capture_output=True, text=True, timeout=60)
+            ], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60)
             
             if result.returncode == 0 and os.path.exists(filename):
                 print(f"✅ 下载完成: {filename}")
@@ -1209,7 +1213,7 @@ def handle_beginner_mode(ip_file=CLOUDFLARE_IP_FILE):
     print("=" * 50)
     
     # 运行测速
-    result = subprocess.run(cmd)
+    result = subprocess.run(cmd, encoding='utf-8', errors='replace')
     
     if result.returncode == 0:
         print("\n✅ 测速完成！结果已保存到 result.csv")
@@ -1361,9 +1365,9 @@ def handle_normal_mode(ip_file=CLOUDFLARE_IP_FILE):
         with open("region_scan.csv", 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                colo = row.get('地区码', '').strip()
+                colo = (row.get('地区码') or '').strip()
                 if colo == cfcolo:
-                    ip = row.get('IP 地址', '').strip()
+                    ip = (row.get('IP 地址') or '').strip()
                     if ip:
                         region_ips.append(ip)
         
@@ -1398,7 +1402,7 @@ def handle_normal_mode(ip_file=CLOUDFLARE_IP_FILE):
             print("=" * 50)
             
             # 运行测速
-            result = subprocess.run(cmd)
+            result = subprocess.run(cmd, encoding='utf-8', errors='replace')
             
             # 清理临时文件
             if os.path.exists(region_ip_file):
@@ -1448,20 +1452,20 @@ def generate_proxy_list(result_file="result.csv", output_file="ips_ports.txt"):
             
             # 查找IP列
             for key in row.keys():
-                if 'ip' in key.lower() and '地址' in key:
-                    ip = row[key].strip()
+                if 'ip' in key.lower() and '地址' in key and row[key] is not None:
+                    ip = str(row[key]).strip()
                     break
-                elif key.lower() == 'ip':
-                    ip = row[key].strip()
+                elif key.lower() == 'ip' and row[key] is not None:
+                    ip = str(row[key]).strip()
                     break
             
             # 查找端口列
             for key in row.keys():
-                if '端口' in key:
-                    port = row[key].strip()
+                if '端口' in key and row[key] is not None:
+                    port = str(row[key]).strip()
                     break
-                elif key.lower() == 'port':
-                    port = row[key].strip()
+                elif key.lower() == 'port' and row[key] is not None:
+                    port = str(row[key]).strip()
                     break
             
             # 如果IP地址中包含端口信息（如 1.2.3.4:443），提取端口
@@ -1525,7 +1529,7 @@ def run_speedtest_with_file(ip_file, dn_count, speed_limit, time_limit):
         
         # 运行测速 - 实时显示输出
         print("正在运行测速，请稍候...")
-        result = subprocess.run(cmd, text=True)
+        result = subprocess.run(cmd, text=True, encoding='utf-8', errors='replace')
         
         if result.returncode == 0:
             print("\n测速完成！")
@@ -1871,25 +1875,26 @@ def upload_results_to_api(result_file="result.csv"):
         with open(result_file, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                ip = row.get('IP 地址', '').strip()
-                port = row.get('端口', '').strip()
+                # 安全获取数据，避免NoneType错误
+                ip = (row.get('IP 地址') or '').strip()
+                port = (row.get('端口') or '').strip()
                 
                 # 尝试多种可能的列名来获取速度
                 speed = ''
                 for speed_key in ['下载速度(MB/s)', '下载速度 (MB/s)', '下载速度']:
-                    if speed_key in row:
-                        speed = row[speed_key].strip()
+                    if speed_key in row and row[speed_key] is not None:
+                        speed = str(row[speed_key]).strip()
                         break
                 
                 # 尝试多种可能的列名来获取延迟
                 latency = ''
                 for latency_key in ['平均延迟', '延迟', 'latency']:
-                    if latency_key in row:
-                        latency = row[latency_key].strip()
+                    if latency_key in row and row[latency_key] is not None:
+                        latency = str(row[latency_key]).strip()
                         break
                 
                 # 获取地区码
-                region_code = row.get('地区码', '').strip()
+                region_code = (row.get('地区码') or '').strip()
                 
                 # 如果IP地址中包含端口信息
                 if ip and ':' in ip:
@@ -2072,12 +2077,15 @@ def upload_results_to_api(result_file="result.csv"):
                 
         except requests.exceptions.Timeout:
             print(f"❌ 请求超时，请检查网络连接")
+            print(f"   建议：检查网络连接或稍后重试")
             fail_count = upload_count
         except requests.exceptions.RequestException as e:
             print(f"❌ 网络错误: {e}")
+            print(f"   建议：检查网络连接或API地址是否正确")
             fail_count = upload_count
         except Exception as e:
             print(f"❌ 请求失败: {e}")
+            print(f"   建议：检查配置是否正确，或联系技术支持")
             fail_count = upload_count
         
         # 显示统计信息
@@ -2119,7 +2127,7 @@ def detect_available_regions():
             with open("region_scan.csv", 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    colo = row.get('地区码', '').strip()
+                    colo = (row.get('地区码') or '').strip()
                     if colo and colo != 'N/A':
                         region_counts[colo] = region_counts.get(colo, 0) + 1
             
@@ -2161,7 +2169,7 @@ def detect_available_regions():
         print("=" * 50)
         
         # 直接运行命令，显示完整输出
-        result = subprocess.run(cmd, timeout=120)
+        result = subprocess.run(cmd, timeout=120, encoding='utf-8', errors='replace')
         
         if result.returncode == 0 and os.path.exists("region_scan.csv"):
             # 读取检测结果
@@ -2171,7 +2179,7 @@ def detect_available_regions():
             with open("region_scan.csv", 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    colo = row.get('地区码', '').strip()
+                    colo = (row.get('地区码') or '').strip()
                     if colo and colo != 'N/A':
                         # 统计IP数量
                         if colo not in region_counts:
@@ -2233,6 +2241,11 @@ if __name__ == "__main__":
         sys.exit(0)
     except Exception as e:
         print(f"\n❌ 程序运行出错: {e}")
+        print(f"   建议：")
+        print(f"   1. 检查网络连接")
+        print(f"   2. 确保有足够的磁盘空间")
+        print(f"   3. 检查Python环境是否正常")
+        print(f"   4. 如果问题持续，请联系技术支持")
         # Windows 系统添加暂停，避免窗口立即关闭
         if sys.platform == "win32":
             print("\n" + "=" * 60)

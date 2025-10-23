@@ -220,9 +220,122 @@ AIRPORT_CODES = {
 AIRPORT_CODES_URL = "https://raw.githubusercontent.com/cloudflare/cf-ui/master/packages/colo-config/src/data.json"
 AIRPORT_CODES_FILE = "airport_codes.json"
 
-# Cloudflare IP列表URL
+# Cloudflare IP列表URL和文件
 CLOUDFLARE_IP_URL = "https://www.cloudflare.com/ips-v4/"
 CLOUDFLARE_IP_FILE = "Cloudflare.txt"
+CLOUDFLARE_IPV6_URL = "https://www.cloudflare.com/ips-v6/"
+CLOUDFLARE_IPV6_FILE = "Cloudflare_ipv6.txt"
+
+# Cloudflare IPv6 地址段（内置）
+# 数据来源：https://www.cloudflare.com/ips-v6/
+CLOUDFLARE_IPV6_RANGES = [
+    # 主要地址段
+    "2400:cb00::/32",
+    "2606:4700::/32",
+    "2803:f800::/32",
+    "2405:b500::/32",
+    "2405:8100::/32",
+    "2a06:98c0::/29",
+    "2c0f:f248::/32",
+    
+    # 详细子网段
+    "2400:cb00:2049::/48",
+    "2400:cb00:f00e::/48",
+    "2606:4700:10::/48",
+    "2606:4700:130::/48",
+    "2606:4700:3000::/48",
+    "2606:4700:3001::/48",
+    "2606:4700:3002::/48",
+    "2606:4700:3003::/48",
+    "2606:4700:3004::/48",
+    "2606:4700:3005::/48",
+    "2606:4700:3006::/48",
+    "2606:4700:3007::/48",
+    "2606:4700:3008::/48",
+    "2606:4700:3009::/48",
+    "2606:4700:3010::/48",
+    "2606:4700:3011::/48",
+    "2606:4700:3012::/48",
+    "2606:4700:3013::/48",
+    "2606:4700:3014::/48",
+    "2606:4700:3015::/48",
+    "2606:4700:3016::/48",
+    "2606:4700:3017::/48",
+    "2606:4700:3018::/48",
+    "2606:4700:3019::/48",
+    "2606:4700:3020::/48",
+    "2606:4700:3021::/48",
+    "2606:4700:3022::/48",
+    "2606:4700:3023::/48",
+    "2606:4700:3024::/48",
+    "2606:4700:3025::/48",
+    "2606:4700:3026::/48",
+    "2606:4700:3027::/48",
+    "2606:4700:3028::/48",
+    "2606:4700:3029::/48",
+    "2606:4700:3030::/48",
+    "2606:4700:3031::/48",
+    "2606:4700:3032::/48",
+    "2606:4700:3033::/48",
+    "2606:4700:3034::/48",
+    "2606:4700:3035::/48",
+    "2606:4700:3036::/48",
+    "2606:4700:3037::/48",
+    "2606:4700:3038::/48",
+    "2606:4700:3039::/48",
+    "2606:4700:a0::/48",
+    "2606:4700:a1::/48",
+    "2606:4700:a8::/48",
+    "2606:4700:a9::/48",
+    "2606:4700:a::/48",
+    "2606:4700:b::/48",
+    "2606:4700:c::/48",
+    "2606:4700:d0::/48",
+    "2606:4700:d1::/48",
+    "2606:4700:d::/48",
+    "2606:4700:e0::/48",
+    "2606:4700:e1::/48",
+    "2606:4700:e2::/48",
+    "2606:4700:e3::/48",
+    "2606:4700:e4::/48",
+    "2606:4700:e5::/48",
+    "2606:4700:e6::/48",
+    "2606:4700:e7::/48",
+    "2606:4700:e::/48",
+    "2606:4700:f1::/48",
+    "2606:4700:f2::/48",
+    "2606:4700:f3::/48",
+    "2606:4700:f4::/48",
+    "2606:4700:f5::/48",
+    "2606:4700:f::/48",
+    "2803:f800:50::/48",
+    "2803:f800:51::/48",
+    "2a06:98c1:3100::/48",
+    "2a06:98c1:3101::/48",
+    "2a06:98c1:3102::/48",
+    "2a06:98c1:3103::/48",
+    "2a06:98c1:3104::/48",
+    "2a06:98c1:3105::/48",
+    "2a06:98c1:3106::/48",
+    "2a06:98c1:3107::/48",
+    "2a06:98c1:3108::/48",
+    "2a06:98c1:3109::/48",
+    "2a06:98c1:310a::/48",
+    "2a06:98c1:310b::/48",
+    "2a06:98c1:310c::/48",
+    "2a06:98c1:310d::/48",
+    "2a06:98c1:310e::/48",
+    "2a06:98c1:310f::/48",
+    "2a06:98c1:3120::/48",
+    "2a06:98c1:3121::/48",
+    "2a06:98c1:3122::/48",
+    "2a06:98c1:3123::/48",
+    "2a06:98c1:3200::/48",
+    "2a06:98c1:50::/48",
+    "2a06:98c1:51::/48",
+    "2a06:98c1:54::/48",
+    "2a06:98c1:58::/48",
+]
 
 # GitHub Release版本 - 使用官方CloudflareSpeedTest
 GITHUB_VERSION = "v2.3.4"
@@ -230,6 +343,20 @@ GITHUB_REPO = "XIU2/CloudflareSpeedTest"
 
 # 配置文件路径
 CONFIG_FILE = ".cloudflare_speedtest_config.json"
+
+
+def generate_ipv6_file():
+    """生成 IPv6 地址列表文件"""
+    try:
+        with open(CLOUDFLARE_IPV6_FILE, 'w', encoding='utf-8') as f:
+            for ipv6_range in CLOUDFLARE_IPV6_RANGES:
+                f.write(ipv6_range + '\n')
+        print(f"✅ IPv6 地址列表已生成: {CLOUDFLARE_IPV6_FILE}")
+        print(f"   共 {len(CLOUDFLARE_IPV6_RANGES)} 个 IPv6 地址段")
+        return True
+    except Exception as e:
+        print(f"❌ 生成 IPv6 地址列表失败: {e}")
+        return False
 
 
 def get_system_info():
@@ -246,6 +373,8 @@ def get_system_info():
         os_type = "win"
     else:
         print(f"不支持的操作系统: {system}")
+        if sys.platform == "win32":
+            input("按 Enter 键退出...")
         sys.exit(1)
     
     # 标准化架构名称
@@ -257,6 +386,8 @@ def get_system_info():
         arch_type = "arm"
     else:
         print(f"不支持的架构: {machine}")
+        if sys.platform == "win32":
+            input("按 Enter 键退出...")
         sys.exit(1)
     
     return os_type, arch_type
@@ -461,6 +592,8 @@ def download_cloudflare_speedtest(os_type, arch_type):
                 return proxy_exec_name
             else:
                 print("未找到反代版本文件，程序无法继续")
+                if sys.platform == "win32":
+                    input("按 Enter 键退出...")
                 sys.exit(1)
     else:
         # 解压文件
@@ -501,6 +634,8 @@ def download_cloudflare_speedtest(os_type, arch_type):
                         os.rename(found_executable, final_name)
                     else:
                         print(f"❌ 源文件不存在: {found_executable}")
+                        if sys.platform == "win32":
+                            input("按 Enter 键退出...")
                         sys.exit(1)
                 
                 # 设置执行权限
@@ -517,6 +652,8 @@ def download_cloudflare_speedtest(os_type, arch_type):
                     for file in files:
                         if not file.endswith(('.zip', '.tar.gz', '.txt', '.md')):
                             print(f"  - {os.path.join(root, file)}")
+                if sys.platform == "win32":
+                    input("按 Enter 键退出...")
                 sys.exit(1)
             
             # 清理压缩包
@@ -524,6 +661,8 @@ def download_cloudflare_speedtest(os_type, arch_type):
             
         except Exception as e:
             print(f"解压失败: {e}")
+            if sys.platform == "win32":
+                input("按 Enter 键退出...")
             sys.exit(1)
     
     # 在Unix系统上赋予执行权限
@@ -534,25 +673,58 @@ def download_cloudflare_speedtest(os_type, arch_type):
     return proxy_exec_name
 
 
-def download_cloudflare_ips():
-    """下载 Cloudflare IP 列表"""
+def select_ip_version():
+    """选择IP版本（IPv4或IPv6）"""
+    print("\n" + "=" * 60)
+    print(" IP 版本选择")
+    print("=" * 60)
+    print("  1. IPv4 - 测试 IPv4 地址（推荐，兼容性最好）")
+    print("  2. IPv6 - 测试 IPv6 地址（需要本地网络支持IPv6）")
+    print("=" * 60)
+    
+    while True:
+        choice = input("\n请选择 IP 版本 [1/2，默认：1]: ").strip()
+        if not choice or choice == "1":
+            print("✓ 已选择: IPv4")
+            return "ipv4", CLOUDFLARE_IP_FILE
+        elif choice == "2":
+            print("✓ 已选择: IPv6")
+            return "ipv6", CLOUDFLARE_IPV6_FILE
+        else:
+            print("✗ 请输入 1 或 2")
+
+
+def download_cloudflare_ips(ip_version="ipv4", ip_file=CLOUDFLARE_IP_FILE):
+    """下载或生成 Cloudflare IP 列表
+    
+    Args:
+        ip_version: IP版本 ("ipv4" 或 "ipv6")
+        ip_file: IP文件路径
+    """
     # 检查文件是否已存在
-    if os.path.exists(CLOUDFLARE_IP_FILE):
-        print(f"✅ 使用已有IP文件: {CLOUDFLARE_IP_FILE}")
-        return
+    if os.path.exists(ip_file):
+        print(f"✅ 使用已有IP文件: {ip_file}")
+        return True
     
-    print("正在下载 Cloudflare IP 列表...")
-    
-    if not download_file(CLOUDFLARE_IP_URL, CLOUDFLARE_IP_FILE):
-        print("下载 Cloudflare IP 列表失败")
-        sys.exit(1)
-    
-    # 检查文件是否为空
-    if os.path.getsize(CLOUDFLARE_IP_FILE) == 0:
-        print("Cloudflare IP 列表文件为空")
-        sys.exit(1)
-    
-    print(f"Cloudflare IP 列表已保存到: {CLOUDFLARE_IP_FILE}")
+    if ip_version == "ipv6":
+        # IPv6 使用内置地址段生成
+        print("正在生成 Cloudflare IPv6 地址列表...")
+        return generate_ipv6_file()
+    else:
+        # IPv4 从网络下载
+        print("正在下载 Cloudflare IPv4 列表...")
+        
+        if not download_file(CLOUDFLARE_IP_URL, CLOUDFLARE_IP_FILE):
+            print("下载 Cloudflare IP 列表失败")
+            return False
+        
+        # 检查文件是否为空
+        if os.path.getsize(CLOUDFLARE_IP_FILE) == 0:
+            print("Cloudflare IP 列表文件为空")
+            return False
+        
+        print(f"Cloudflare IP 列表已保存到: {CLOUDFLARE_IP_FILE}")
+        return True
 
 
 def load_local_airport_codes():
@@ -706,8 +878,12 @@ def display_preset_configs():
     print("=" * 60)
 
 
-def get_user_input():
-    """获取用户输入参数"""
+def get_user_input(ip_file=CLOUDFLARE_IP_FILE):
+    """获取用户输入参数
+    
+    Args:
+        ip_file: 要使用的IP文件路径
+    """
     # 询问功能选择
     print("\n" + "=" * 60)
     print(" 功能选择")
@@ -723,13 +899,13 @@ def get_user_input():
     
     if choice == "1":
         # 小白快速测试模式
-        return handle_beginner_mode()
+        return handle_beginner_mode(ip_file)
     elif choice == "3":
         # 优选反代模式
         return handle_proxy_mode()
     else:
         # 常规测速模式
-        return handle_normal_mode()
+        return handle_normal_mode(ip_file)
 
 
 def select_csv_file():
@@ -918,8 +1094,12 @@ def handle_proxy_mode():
         return None, None, None, None
 
 
-def handle_beginner_mode():
-    """处理小白快速测试模式"""
+def handle_beginner_mode(ip_file=CLOUDFLARE_IP_FILE):
+    """处理小白快速测试模式
+    
+    Args:
+        ip_file: 要使用的IP文件路径
+    """
     print("\n" + "=" * 70)
     print(" 小白快速测试模式")
     print("=" * 70)
@@ -1018,7 +1198,7 @@ def handle_beginner_mode():
         cmd = [f"./{exec_name}"]
     
     cmd.extend([
-        "-f", CLOUDFLARE_IP_FILE,
+        "-f", ip_file,
         "-dn", dn_count,
         "-sl", speed_limit,
         "-tl", time_limit,
@@ -1044,8 +1224,12 @@ def handle_beginner_mode():
     return "ALL", dn_count, speed_limit, time_limit
 
 
-def handle_normal_mode():
-    """处理常规测速模式"""
+def handle_normal_mode(ip_file=CLOUDFLARE_IP_FILE):
+    """处理常规测速模式
+    
+    Args:
+        ip_file: 要使用的IP文件路径
+    """
     print("\n开始检测可用地区...")
     print("正在使用HTTPing模式检测各地区可用性...")
     
@@ -1428,8 +1612,13 @@ def main():
     print(f"\n[程序准备]")
     exec_name = download_cloudflare_speedtest(os_type, arch_type)
     
-    # 下载 Cloudflare IP 列表
-    download_cloudflare_ips()
+    # 选择 IP 版本
+    ip_version, ip_file = select_ip_version()
+    
+    # 下载或生成 Cloudflare IP 列表
+    if not download_cloudflare_ips(ip_version, ip_file):
+        print("❌ 准备IP列表失败")
+        return 1
     
     # 获取用户输入
     print(f"\n[参数配置]")
@@ -1439,17 +1628,27 @@ def main():
     print(" 博客 https://joeyblog.net")
     print(" Telegram交流群: https://t.me/+ft-zI76oovgwNmRh")
     print("=" * 60)
-    result = get_user_input()
+    result = get_user_input(ip_file)
     
     # 检查是否是优选反代模式
     if result == (None, None, None, None):
         print("\n优选反代功能已完成，程序退出")
+        # Windows 系统添加暂停，避免窗口立即关闭
+        if sys.platform == "win32":
+            print("\n" + "=" * 60)
+            input("按 Enter 键退出...")
         return 0
     
     cfcolo, dn_count, speed_limit, time_limit = result
     
     # 常规测速模式已经在handle_normal_mode中完成测速
     print(f"\n常规测速已完成")
+    
+    # Windows 系统添加暂停，避免窗口立即关闭
+    if sys.platform == "win32":
+        print("\n" + "=" * 60)
+        input("按 Enter 键退出...")
+    
     return 0
 
 
@@ -2023,8 +2222,20 @@ def detect_available_regions():
 
 if __name__ == "__main__":
     try:
-        sys.exit(main())
+        exit_code = main()
+        sys.exit(exit_code)
     except KeyboardInterrupt:
         print("\n\n用户取消操作")
+        # Windows 系统添加暂停，避免窗口立即关闭
+        if sys.platform == "win32":
+            print("\n" + "=" * 60)
+            input("按 Enter 键退出...")
         sys.exit(0)
+    except Exception as e:
+        print(f"\n❌ 程序运行出错: {e}")
+        # Windows 系统添加暂停，避免窗口立即关闭
+        if sys.platform == "win32":
+            print("\n" + "=" * 60)
+            input("按 Enter 键退出...")
+        sys.exit(1)
 

@@ -18,22 +18,27 @@ jobs:
       matrix:
         include:
           # Windows x64
-          - os: windows-latest
-            platform: windows
-            arch: amd64
-            ext: .exe
+#          - os: windows-latest
+#            platform: windows
+#            arch: amd64
+#            ext: .exe
 
           # Linux x64
+#          - os: ubuntu-latest
+#            platform: linux
+#            arch: amd64
+#            ext: ''
+
           - os: ubuntu-latest
             platform: linux
-            arch: amd64
+            arch: arm64
             ext: ''
 
           # macOS Intel
-          - os: macos-13
-            platform: macos
-            arch: amd64
-            ext: ''
+#          - os: macos-13
+#            platform: macos
+#            arch: amd64
+#            ext: ''
 
           # macOS Apple Silicon
           - os: macos-14

@@ -119,6 +119,7 @@ jobs:
           files: |
             artifacts/CloudflareSpeedTest-windows-amd64/CloudflareSpeedTest-windows-amd64.exe
             artifacts/CloudflareSpeedTest-linux-amd64/CloudflareSpeedTest-linux-amd64
+            artifacts/CloudflareSpeedTest-linux-amd64/CloudflareSpeedTest-linux-arm64
             artifacts/CloudflareSpeedTest-macos-amd64/CloudflareSpeedTest-macos-amd64
             artifacts/CloudflareSpeedTest-macos-arm64/CloudflareSpeedTest-macos-arm64
             artifacts/Beginner-Edition-windows-amd64/CloudflareSpeedTest-Beginner-For-Newbies-windows-amd64.zip

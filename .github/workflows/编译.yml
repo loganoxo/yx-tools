@@ -1,5 +1,5 @@
 name: Build All Platforms
-#
+# 设置Linux为arm64也没什么用,github不支持
 on:
   push:
     tags:

@@ -21,37 +21,37 @@ from datetime import datetime
 def curl_request(url, method='GET', data=None, headers=None, timeout=30):
     """
     使用curl命令进行HTTP请求（当requests的SSL模块不可用时使用）
-    
+
     Args:
         url: 请求的URL
         method: HTTP方法（GET, POST, DELETE等）
         data: 请求数据（将被转换为JSON）
         headers: 请求头字典
         timeout: 超时时间（秒）
-    
+
     Returns:
         dict: 包含status_code、json、text等属性的响应对象模拟
     """
     cmd = ['curl', '-s', '-w', '\\n%{http_code}', '-X', method, '--connect-timeout', str(timeout)]
-    
+
     # 添加请求头
     if headers:
         for key, value in headers.items():
             cmd.extend(['-H', f'{key}: {value}'])
-    
+
     # 添加请求数据
     if data:
         json_data = json.dumps(data)
         cmd.extend(['-d', json_data])
-    
+
     # 添加URL
     cmd.append(url)
-    
+
     try:
         # 执行curl命令，指定编码为utf-8
         result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=timeout)
         output = result.stdout
-        
+
         # 分离响应体和状态码
         lines = output.strip().split('\n')
         if len(lines) >= 1:
@@ -60,21 +60,21 @@ def curl_request(url, method='GET', data=None, headers=None, timeout=30):
         else:
             status_code = 0
             response_text = output
-        
+
         # 创建响应对象模拟
         class CurlResponse:
             def __init__(self, status_code, text):
                 self.status_code = status_code
                 self.text = text
                 self._json = None
-            
+
             def json(self):
                 if self._json is None:
                     self._json = json.loads(self.text) if self.text else {}
                 return self._json
-        
+
         return CurlResponse(status_code, response_text)
-    
+
     except subprocess.TimeoutExpired:
         raise Exception("请求超时，请检查网络连接")
     except subprocess.CalledProcessError as e:
@@ -91,16 +91,16 @@ AIRPORT_CODES = {
     # 亚太地区 - 中国及周边
     "HKG": {"name": "香港", "region": "亚太", "country": "中国香港"},
     "TPE": {"name": "台北", "region": "亚太", "country": "中国台湾"},
-    
+
     # 亚太地区 - 日本
     "NRT": {"name": "东京成田", "region": "亚太", "country": "日本"},
     "KIX": {"name": "大阪", "region": "亚太", "country": "日本"},
     "ITM": {"name": "大阪伊丹", "region": "亚太", "country": "日本"},
     "FUK": {"name": "福冈", "region": "亚太", "country": "日本"},
-    
+
     # 亚太地区 - 韩国
     "ICN": {"name": "首尔仁川", "region": "亚太", "country": "韩国"},
-    
+
     # 亚太地区 - 东南亚
     "SIN": {"name": "新加坡", "region": "亚太", "country": "新加坡"},
     "BKK": {"name": "曼谷", "region": "亚太", "country": "泰国"},
@@ -111,7 +111,7 @@ AIRPORT_CODES = {
     "KUL": {"name": "吉隆坡", "region": "亚太", "country": "马来西亚"},
     "RGN": {"name": "仰光", "region": "亚太", "country": "缅甸"},
     "PNH": {"name": "金边", "region": "亚太", "country": "柬埔寨"},
-    
+
     # 亚太地区 - 南亚
     "BOM": {"name": "孟买", "region": "亚太", "country": "印度"},
     "DEL": {"name": "新德里", "region": "亚太", "country": "印度"},
@@ -119,14 +119,14 @@ AIRPORT_CODES = {
     "BLR": {"name": "班加罗尔", "region": "亚太", "country": "印度"},
     "HYD": {"name": "海得拉巴", "region": "亚太", "country": "印度"},
     "CCU": {"name": "加尔各答", "region": "亚太", "country": "印度"},
-    
+
     # 亚太地区 - 澳洲
     "SYD": {"name": "悉尼", "region": "亚太", "country": "澳大利亚"},
     "MEL": {"name": "墨尔本", "region": "亚太", "country": "澳大利亚"},
     "BNE": {"name": "布里斯班", "region": "亚太", "country": "澳大利亚"},
     "PER": {"name": "珀斯", "region": "亚太", "country": "澳大利亚"},
     "AKL": {"name": "奥克兰", "region": "亚太", "country": "新西兰"},
-    
+
     # 北美地区 - 美国西海岸
     "LAX": {"name": "洛杉矶", "region": "北美", "country": "美国"},
     "SJC": {"name": "圣何塞", "region": "北美", "country": "美国"},
@@ -136,7 +136,7 @@ AIRPORT_CODES = {
     "SAN": {"name": "圣地亚哥", "region": "北美", "country": "美国"},
     "PHX": {"name": "凤凰城", "region": "北美", "country": "美国"},
     "LAS": {"name": "拉斯维加斯", "region": "北美", "country": "美国"},
-    
+
     # 北美地区 - 美国东海岸
     "EWR": {"name": "纽瓦克", "region": "北美", "country": "美国"},
     "IAD": {"name": "华盛顿", "region": "北美", "country": "美国"},
@@ -145,7 +145,7 @@ AIRPORT_CODES = {
     "ATL": {"name": "亚特兰大", "region": "北美", "country": "美国"},
     "MIA": {"name": "迈阿密", "region": "北美", "country": "美国"},
     "MCO": {"name": "奥兰多", "region": "北美", "country": "美国"},
-    
+
     # 北美地区 - 美国中部
     "ORD": {"name": "芝加哥", "region": "北美", "country": "美国"},
     "DFW": {"name": "达拉斯", "region": "北美", "country": "美国"},
@@ -155,12 +155,12 @@ AIRPORT_CODES = {
     "DTW": {"name": "底特律", "region": "北美", "country": "美国"},
     "STL": {"name": "圣路易斯", "region": "北美", "country": "美国"},
     "MCI": {"name": "堪萨斯城", "region": "北美", "country": "美国"},
-    
+
     # 北美地区 - 加拿大
     "YYZ": {"name": "多伦多", "region": "北美", "country": "加拿大"},
     "YVR": {"name": "温哥华", "region": "北美", "country": "加拿大"},
     "YUL": {"name": "蒙特利尔", "region": "北美", "country": "加拿大"},
-    
+
     # 欧洲地区 - 西欧
     "LHR": {"name": "伦敦", "region": "欧洲", "country": "英国"},
     "CDG": {"name": "巴黎", "region": "欧洲", "country": "法国"},
@@ -172,7 +172,7 @@ AIRPORT_CODES = {
     "MUC": {"name": "慕尼黑", "region": "欧洲", "country": "德国"},
     "DUS": {"name": "杜塞尔多夫", "region": "欧洲", "country": "德国"},
     "HAM": {"name": "汉堡", "region": "欧洲", "country": "德国"},
-    
+
     # 欧洲地区 - 南欧
     "MAD": {"name": "马德里", "region": "欧洲", "country": "西班牙"},
     "BCN": {"name": "巴塞罗那", "region": "欧洲", "country": "西班牙"},
@@ -180,20 +180,20 @@ AIRPORT_CODES = {
     "FCO": {"name": "罗马", "region": "欧洲", "country": "意大利"},
     "ATH": {"name": "雅典", "region": "欧洲", "country": "希腊"},
     "LIS": {"name": "里斯本", "region": "欧洲", "country": "葡萄牙"},
-    
+
     # 欧洲地区 - 北欧
     "ARN": {"name": "斯德哥尔摩", "region": "欧洲", "country": "瑞典"},
     "CPH": {"name": "哥本哈根", "region": "欧洲", "country": "丹麦"},
     "OSL": {"name": "奥斯陆", "region": "欧洲", "country": "挪威"},
     "HEL": {"name": "赫尔辛基", "region": "欧洲", "country": "芬兰"},
-    
+
     # 欧洲地区 - 东欧
     "WAW": {"name": "华沙", "region": "欧洲", "country": "波兰"},
     "PRG": {"name": "布拉格", "region": "欧洲", "country": "捷克"},
     "BUD": {"name": "布达佩斯", "region": "欧洲", "country": "匈牙利"},
     "OTP": {"name": "布加勒斯特", "region": "欧洲", "country": "罗马尼亚"},
     "SOF": {"name": "索非亚", "region": "欧洲", "country": "保加利亚"},
-    
+
     # 中东地区
     "DXB": {"name": "迪拜", "region": "中东", "country": "阿联酋"},
     "TLV": {"name": "特拉维夫", "region": "中东", "country": "以色列"},
@@ -202,7 +202,7 @@ AIRPORT_CODES = {
     "KWI": {"name": "科威特", "region": "中东", "country": "科威特"},
     "DOH": {"name": "多哈", "region": "中东", "country": "卡塔尔"},
     "MCT": {"name": "马斯喀特", "region": "中东", "country": "阿曼"},
-    
+
     # 南美地区
     "GRU": {"name": "圣保罗", "region": "南美", "country": "巴西"},
     "GIG": {"name": "里约热内卢", "region": "南美", "country": "巴西"},
@@ -210,7 +210,7 @@ AIRPORT_CODES = {
     "BOG": {"name": "波哥大", "region": "南美", "country": "哥伦比亚"},
     "LIM": {"name": "利马", "region": "南美", "country": "秘鲁"},
     "SCL": {"name": "圣地亚哥", "region": "南美", "country": "智利"},
-    
+
     # 非洲地区
     "JNB": {"name": "约翰内斯堡", "region": "非洲", "country": "南非"},
     "CPT": {"name": "开普敦", "region": "非洲", "country": "南非"},
@@ -241,7 +241,7 @@ CLOUDFLARE_IPV6_RANGES = [
     "2405:8100::/32",
     "2a06:98c0::/29",
     "2c0f:f248::/32",
-    
+
     # 详细子网段
     "2400:cb00:2049::/48",
     "2400:cb00:f00e::/48",
@@ -367,7 +367,7 @@ def get_system_info():
     """获取系统信息"""
     system = platform.system().lower()
     machine = platform.machine().lower()
-    
+
     # 标准化系统名称
     if system == "darwin":
         os_type = "darwin"
@@ -380,7 +380,7 @@ def get_system_info():
         if sys.platform == "win32":
             input("按 Enter 键退出...")
         sys.exit(1)
-    
+
     # 标准化架构名称
     if machine in ["x86_64", "amd64", "x64"]:
         arch_type = "amd64"
@@ -393,7 +393,7 @@ def get_system_info():
         if sys.platform == "win32":
             input("按 Enter 键退出...")
         sys.exit(1)
-    
+
     return os_type, arch_type
 
 
@@ -410,17 +410,17 @@ def get_executable_name(os_type, arch_type):
 def download_file(url, filename):
     """下载文件 - 支持多种下载方法"""
     print(f"正在下载: {url}")
-    
+
     # 方法1: 尝试使用 requests（SSL不可用时静默切换到curl）
     try:
         try:
             response = requests.get(url, stream=True, timeout=60)
             response.raise_for_status()
-            
+
             with open(filename, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
-            
+
             print(f"✅ 下载完成: {filename}")
             return True
         except ImportError as e:
@@ -429,7 +429,7 @@ def download_file(url, filename):
                 result = subprocess.run([
                     "curl", "-L", "-o", filename, url
                 ], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60)
-                
+
                 if result.returncode == 0 and os.path.exists(filename):
                     print(f"✅ 下载完成: {filename}")
                     return True
@@ -438,13 +438,13 @@ def download_file(url, filename):
     except Exception:
         # 静默失败，继续尝试其他方法
         pass
-    
+
     # 方法2: 尝试使用 wget
     try:
         result = subprocess.run([
             "wget", "-O", filename, url
         ], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60)
-        
+
         if result.returncode == 0 and os.path.exists(filename):
             print(f"✅ 下载完成: {filename}")
             return True
@@ -454,13 +454,13 @@ def download_file(url, filename):
     except Exception:
         # wget 执行失败，静默继续
         pass
-    
+
     # 方法3: 尝试使用 curl
     try:
         result = subprocess.run([
             "curl", "-L", "-o", filename, url
         ], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60)
-        
+
         if result.returncode == 0 and os.path.exists(filename):
             print(f"✅ 下载完成: {filename}")
             return True
@@ -470,7 +470,7 @@ def download_file(url, filename):
     except Exception:
         # curl 执行失败，静默继续
         pass
-    
+
     # 方法3.5: Windows PowerShell 下载
     if sys.platform == "win32":
         try:
@@ -478,7 +478,7 @@ def download_file(url, filename):
             result = subprocess.run([
                 "powershell", "-Command", ps_cmd
             ], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60)
-            
+
             if result.returncode == 0 and os.path.exists(filename):
                 print(f"✅ 下载完成: {filename}")
                 return True
@@ -488,7 +488,7 @@ def download_file(url, filename):
         except Exception:
             # PowerShell 执行失败，静默继续
             pass
-    
+
     # 方法4: 尝试使用 urllib
     try:
         import urllib.request
@@ -498,7 +498,7 @@ def download_file(url, filename):
     except Exception:
         # urllib 下载失败，静默继续
         pass
-    
+
     # 方法5: 尝试 HTTP 版本
     if url.startswith("https://"):
         http_url = url.replace("https://", "http://")
@@ -506,11 +506,11 @@ def download_file(url, filename):
             try:
                 response = requests.get(http_url, stream=True, timeout=60)
                 response.raise_for_status()
-                
+
                 with open(filename, "wb") as f:
                     for chunk in response.iter_content(chunk_size=8192):
                         f.write(chunk)
-                
+
                 print(f"✅ 下载完成: {filename}")
                 return True
             except ImportError as e:
@@ -519,7 +519,7 @@ def download_file(url, filename):
                     result = subprocess.run([
                         "curl", "-L", "-o", filename, http_url
                     ], capture_output=True, text=True, timeout=60)
-                    
+
                     if result.returncode == 0 and os.path.exists(filename):
                         print(f"✅ 下载完成: {filename}")
                         return True
@@ -528,7 +528,7 @@ def download_file(url, filename):
         except Exception:
             # HTTP 下载失败，静默继续
             pass
-    
+
     # 所有方法都失败
     print("❌ 下载失败")
     return False
@@ -541,14 +541,14 @@ def download_cloudflare_speedtest(os_type, arch_type):
         proxy_exec_name = f"CloudflareST_proxy_{os_type}_{arch_type}.exe"
     else:
         proxy_exec_name = f"CloudflareST_proxy_{os_type}_{arch_type}"
-    
+
     if os.path.exists(proxy_exec_name):
         print(f"✓ 使用反代版本: {proxy_exec_name}")
         return proxy_exec_name
-    
+
     # 检查是否已下载反代版本
     print("反代版本不存在，开始下载反代版本...")
-    
+
     # 构建下载URL - 使用您的GitHub仓库
     if os_type == "win":
         if arch_type == "amd64":
@@ -567,9 +567,9 @@ def download_cloudflare_speedtest(os_type, arch_type):
             archive_name = "CloudflareST_proxy_linux_386.tar.gz"
         else:  # arm64
             archive_name = "CloudflareST_proxy_linux_arm64.tar.gz"
-    
+
     download_url = f"https://github.com/byJoey/CloudflareSpeedTest/releases/download/v1.0/{archive_name}"
-    
+
     if not download_file(download_url, archive_name):
         # 备用方案: 尝试 HTTP 下载
         http_url = download_url.replace("https://", "http://")
@@ -580,13 +580,13 @@ def download_cloudflare_speedtest(os_type, arch_type):
             print(f"下载地址: {download_url}")
             print(f"解压后文件名应为: CloudflareST_proxy_{os_type}_{arch_type}{'.exe' if os_type == 'win' else ''}")
             print("="*60)
-            
+
             # 检查是否有手动下载的反代版本文件
             if os_type == "win":
                 proxy_exec_name = f"CloudflareST_proxy_{os_type}_{arch_type}.exe"
             else:
                 proxy_exec_name = f"CloudflareST_proxy_{os_type}_{arch_type}"
-            
+
             if os.path.exists(proxy_exec_name):
                 print(f"找到手动下载的反代版本: {proxy_exec_name}")
                 # 手动下载的文件也需要赋予执行权限
@@ -611,7 +611,7 @@ def download_cloudflare_speedtest(os_type, arch_type):
                 import tarfile
                 with tarfile.open(archive_name, 'r:gz') as tar_ref:
                     tar_ref.extractall('.')
-            
+
             # 查找反代版本可执行文件
             found_executable = None
             for root, dirs, files in os.walk('.'):
@@ -621,14 +621,14 @@ def download_cloudflare_speedtest(os_type, arch_type):
                         break
                 if found_executable:
                     break
-            
+
             if found_executable:
                 # 获取最终文件名 - 使用标准格式
                 if os_type == "win":
                     final_name = f"CloudflareST_proxy_{os_type}_{arch_type}.exe"
                 else:
                     final_name = f"CloudflareST_proxy_{os_type}_{arch_type}"
-                
+
                 # 如果文件不在当前目录或文件名不匹配，移动到当前目录并重命名
                 if os.path.abspath(found_executable) != os.path.abspath(final_name):
                     if os.path.exists(final_name):
@@ -641,11 +641,11 @@ def download_cloudflare_speedtest(os_type, arch_type):
                         if sys.platform == "win32":
                             input("按 Enter 键退出...")
                         sys.exit(1)
-                
+
                 # 设置执行权限
                 if os_type != "win":
                     os.chmod(final_name, 0o755)
-                
+
                 print(f"✓ 反代版本设置完成: {final_name}")
                 return final_name
             else:
@@ -659,21 +659,21 @@ def download_cloudflare_speedtest(os_type, arch_type):
                 if sys.platform == "win32":
                     input("按 Enter 键退出...")
                 sys.exit(1)
-            
+
             # 清理压缩包
             os.remove(archive_name)
-            
+
         except Exception as e:
             print(f"解压失败: {e}")
             if sys.platform == "win32":
                 input("按 Enter 键退出...")
             sys.exit(1)
-    
+
     # 在Unix系统上赋予执行权限
     if os_type != "win":
         os.chmod(proxy_exec_name, 0o755)
         print(f"已赋予执行权限: {proxy_exec_name}")
-    
+
     return proxy_exec_name
 
 
@@ -685,7 +685,7 @@ def select_ip_version():
     print("  1. IPv4 - 测试 IPv4 地址（推荐，兼容性最好）")
     print("  2. IPv6 - 测试 IPv6 地址（需要本地网络支持IPv6）")
     print("=" * 60)
-    
+
     while True:
         choice = input("\n请选择 IP 版本 [1/2，默认：1]: ").strip()
         if not choice or choice == "1":
@@ -700,7 +700,7 @@ def select_ip_version():
 
 def download_cloudflare_ips(ip_version="ipv4", ip_file=CLOUDFLARE_IP_FILE):
     """下载或生成 Cloudflare IP 列表
-    
+
     Args:
         ip_version: IP版本 ("ipv4" 或 "ipv6")
         ip_file: IP文件路径
@@ -709,7 +709,7 @@ def download_cloudflare_ips(ip_version="ipv4", ip_file=CLOUDFLARE_IP_FILE):
     if os.path.exists(ip_file):
         print(f"✅ 使用已有IP文件: {ip_file}")
         return True
-    
+
     if ip_version == "ipv6":
         # IPv6 使用内置地址段生成
         print("正在生成 Cloudflare IPv6 地址列表...")
@@ -717,16 +717,16 @@ def download_cloudflare_ips(ip_version="ipv4", ip_file=CLOUDFLARE_IP_FILE):
     else:
         # IPv4 从网络下载
         print("正在下载 Cloudflare IPv4 列表...")
-        
+
         if not download_file(CLOUDFLARE_IP_URL, CLOUDFLARE_IP_FILE):
             print("下载 Cloudflare IP 列表失败")
             return False
-        
+
         # 检查文件是否为空
         if os.path.getsize(CLOUDFLARE_IP_FILE) == 0:
             print("Cloudflare IP 列表文件为空")
             return False
-        
+
         print(f"Cloudflare IP 列表已保存到: {CLOUDFLARE_IP_FILE}")
         return True
 
@@ -762,11 +762,11 @@ def display_airport_codes(region_filter=None):
         if region not in regions:
             regions[region] = []
         regions[region].append((code, info))
-    
+
     # 显示统计信息
     print(f"\n支持的机场码列表（共 {len(AIRPORT_CODES)} 个数据中心）")
     print("=" * 70)
-    
+
     # 如果指定了地区筛选
     if region_filter:
         region_filter = region_filter.strip()
@@ -780,7 +780,7 @@ def display_airport_codes(region_filter=None):
             print(f"未找到地区: {region_filter}")
             print(f"可用地区: {', '.join(sorted(regions.keys()))}")
         return
-    
+
     # 显示所有地区
     region_order = ["亚太", "北美", "欧洲", "中东", "南美", "非洲", "其他"]
     for region in region_order:
@@ -790,17 +790,17 @@ def display_airport_codes(region_filter=None):
             for code, info in sorted(regions[region], key=lambda x: x[0]):
                 country = info.get('country', '')
                 print(f"  {code:5s} - {info['name']:20s} ({country})")
-    
+
     print("=" * 70)
 
 
 def display_popular_codes():
     """显示热门机场码"""
     popular = {
-        "HKG": "香港", "SIN": "新加坡", "NRT": "东京成田", "ICN": "首尔", 
+        "HKG": "香港", "SIN": "新加坡", "NRT": "东京成田", "ICN": "首尔",
         "LAX": "洛杉矶", "SJC": "圣何塞", "LHR": "伦敦", "FRA": "法兰克福"
     }
-    
+
     print("\n热门机场码:")
     print("-" * 50)
     for code, name in popular.items():
@@ -816,39 +816,39 @@ def find_airport_by_name(query):
     query = query.strip()
     if not query:
         return None
-    
+
     # 先尝试精确匹配机场码
     query_upper = query.upper()
     if query_upper in AIRPORT_CODES:
         return query_upper
-    
+
     # 构建城市名称到机场码的映射
     results = []
-    
+
     for code, info in AIRPORT_CODES.items():
         name = info.get('name', '').lower()
         country = info.get('country', '').lower()
         query_lower = query.lower()
-        
+
         # 精确匹配城市名称
         if name == query_lower:
             return code
-        
+
         # 模糊匹配（包含关系）
         if query_lower in name or name in query_lower:
             results.append((code, info, 1))  # 优先级1
         elif query_lower in country:
             results.append((code, info, 2))  # 优先级2
-    
+
     # 如果有匹配结果
     if results:
         # 按优先级排序
         results.sort(key=lambda x: x[2])
-        
+
         # 如果只有一个结果，直接返回
         if len(results) == 1:
             return results[0][0]
-        
+
         # 如果有多个结果，显示让用户选择
         print(f"\n找到 {len(results)} 个匹配的城市:")
         print("-" * 60)
@@ -857,7 +857,7 @@ def find_airport_by_name(query):
             country = info.get('country', '')
             print(f"  {idx}. {code:5s} - {info['name']:20s} ({country}) [{region}]")
         print("-" * 60)
-        
+
         try:
             choice = input(f"\n请选择 [1-{min(len(results), 10)}] 或按回车取消: ").strip()
             if choice:
@@ -866,7 +866,7 @@ def find_airport_by_name(query):
                     return results[idx][0]
         except (ValueError, IndexError):
             pass
-    
+
     return None
 
 
@@ -884,7 +884,7 @@ def display_preset_configs():
 
 def get_user_input(ip_file=CLOUDFLARE_IP_FILE):
     """获取用户输入参数
-    
+
     Args:
         ip_file: 要使用的IP文件路径
     """
@@ -896,11 +896,11 @@ def get_user_input(ip_file=CLOUDFLARE_IP_FILE):
     print("  2. 常规测速 - 测试指定机场码的IP速度")
     print("  3. 优选反代 - 从CSV文件生成反代IP列表")
     print("=" * 60)
-    
+
     choice = input("\n请选择功能 [默认: 1]: ").strip()
     if not choice:
         choice = "1"
-    
+
     if choice == "1":
         # 小白快速测试模式
         return handle_beginner_mode(ip_file)
@@ -918,7 +918,7 @@ def select_csv_file():
         csv_file = input("\n请输入CSV文件路径 [默认: result.csv]: ").strip()
         if not csv_file:
             csv_file = "result.csv"
-        
+
         if os.path.exists(csv_file):
             print(f"找到文件: {csv_file}")
             return csv_file
@@ -945,18 +945,18 @@ def handle_proxy_mode():
     print("   - 或包含 'ip' 和 'port' 列")
     print("   - 支持逗号分隔的CSV格式")
     print("=" * 70)
-    
+
     # 选择CSV文件
     csv_file = select_csv_file()
-    
+
     if not csv_file:
         print("未选择有效文件，退出优选反代模式")
         return None, None, None, None
-    
+
     # 生成反代IP列表
     print(f"\n正在处理CSV文件: {csv_file}")
     success = generate_proxy_list(csv_file, "ips_ports.txt")
-    
+
     if success:
         print("\n" + "=" * 60)
         print(" 优选反代功能完成！")
@@ -969,27 +969,27 @@ def handle_proxy_mode():
         print("   - 支持各种代理软件")
         print("   - 建议定期更新IP列表")
         print("=" * 60)
-        
+
         # 询问是否进行测速
         print("\n" + "=" * 50)
         test_choice = input("是否对反代IP列表进行测速？[Y/n]: ").strip().lower()
-        
+
         if test_choice in ['n', 'no']:
             print("跳过测速，优选反代功能完成")
             return None, None, None, None
 
         print("开始对反代IP列表进行测速...")
         print("注意: 反代模式直接对IP列表测速，不需要选择机场码")
-        
+
         # 显示预设配置选项
         display_preset_configs()
-        
+
         # 获取配置选择
         while True:
             config_choice = input("\n请选择配置 [默认: 1]: ").strip()
             if not config_choice:
                 config_choice = "1"
-            
+
             if config_choice == "1":
                 # 快速测试
                 dn_count = "10"
@@ -1014,13 +1014,13 @@ def handle_proxy_mode():
             elif config_choice == "4":
                 # 自定义配置
                 print("\n自定义配置:")
-                
+
                 # 获取测试IP数量
                 while True:
                     dn_count = input("请输入要测试的 IP 数量 [默认: 10]: ").strip()
                     if not dn_count:
                         dn_count = "10"
-                    
+
                     try:
                         dn_count_int = int(dn_count)
                         if dn_count_int <= 0:
@@ -1034,13 +1034,13 @@ def handle_proxy_mode():
                         break
                     except ValueError:
                         print("✗ 请输入有效的数字")
-                
+
                 # 获取下载速度下限
                 while True:
                     speed_limit = input("请输入下载速度下限 (MB/s) [默认: 1]: ").strip()
                     if not speed_limit:
                         speed_limit = "1"
-                    
+
                     try:
                         speed_limit_float = float(speed_limit)
                         if speed_limit_float < 0:
@@ -1055,13 +1055,13 @@ def handle_proxy_mode():
                         break
                     except ValueError:
                         print("✗ 请输入有效的数字")
-                
+
                 # 获取延迟阈值
                 while True:
                     time_limit = input("请输入延迟阈值 (ms) [默认: 1000]: ").strip()
                     if not time_limit:
                         time_limit = "1000"
-                    
+
                     try:
                         time_limit_int = int(time_limit)
                         if time_limit_int <= 0:
@@ -1076,22 +1076,22 @@ def handle_proxy_mode():
                         break
                     except ValueError:
                         print("✗ 请输入有效的数字")
-                
+
                 print(f"✓ 自定义配置: {dn_count}个IP, {speed_limit}MB/s, {time_limit}ms")
                 break
             else:
                 print("✗ 无效选择，请输入 1-4")
-        
+
         print(f"\n测速参数: 测试{dn_count}个IP, 速度下限{speed_limit}MB/s, 延迟上限{time_limit}ms")
         print("模式: 反代IP列表测速")
-        
+
         # 运行测速
         result_code = run_speedtest_with_file("ips_ports.txt", dn_count, speed_limit, time_limit)
-        
+
         # 如果测速成功，询问是否上报结果
         if result_code == 0 and os.path.exists("result.csv"):
             upload_results_to_api("result.csv")
-        
+
         return None, None, None, None
     else:
         print("\n优选反代功能失败")
@@ -1100,7 +1100,7 @@ def handle_proxy_mode():
 
 def handle_beginner_mode(ip_file=CLOUDFLARE_IP_FILE):
     """处理小白快速测试模式
-    
+
     Args:
         ip_file: 要使用的IP文件路径
     """
@@ -1110,7 +1110,7 @@ def handle_beginner_mode(ip_file=CLOUDFLARE_IP_FILE):
     print(" 此功能专为新手设计，只需要输入3个简单的数字即可开始测试")
     print(" 无需了解复杂的参数设置，程序会引导您完成所有配置")
     print("=" * 70)
-    
+
     # 获取测试IP数量
     print("\n📊 第一步：设置测试IP数量")
     print("说明：测试的IP数量越多，结果越准确，但耗时越长")
@@ -1132,7 +1132,7 @@ def handle_beginner_mode(ip_file=CLOUDFLARE_IP_FILE):
             break
         except ValueError:
             print("✗ 请输入有效的数字")
-    
+
     # 获取延迟阈值
     print(f"\n⏱️  第二步：设置延迟上限")
     print("说明：延迟越低，网络响应越快。一般建议100-1000ms")
@@ -1154,7 +1154,7 @@ def handle_beginner_mode(ip_file=CLOUDFLARE_IP_FILE):
             break
         except ValueError:
             print("✗ 请输入有效的数字")
-    
+
     # 获取下载速度下限
     print(f"\n🚀 第三步：设置下载速度下限")
     print("说明：速度越高，网络越快。一般建议1-10MB/s")
@@ -1176,78 +1176,79 @@ def handle_beginner_mode(ip_file=CLOUDFLARE_IP_FILE):
             break
         except ValueError:
             print("✗ 请输入有效的数字")
-    
+
     print(f"\n✅ 配置完成！")
     print(f"📋 测试参数:")
     print(f"   - 测试IP数量: {dn_count} 个")
     print(f"   - 延迟上限: {time_limit} ms")
     print(f"   - 速度下限: {speed_limit} MB/s")
     print("=" * 50)
-    
+
     print(f"\n🎯 开始测速...")
     print(f"参数: 测试{dn_count}个IP, 速度下限{speed_limit}MB/s, 延迟上限{time_limit}ms")
     print("模式: 小白快速测试（全自动，无需选择地区）")
-    
+
     # 直接使用 Cloudflare IP 列表进行测速
     print(f"\n正在使用 Cloudflare IP 列表进行测速...")
-    
+
     # 获取系统信息和可执行文件
     os_type, arch_type = get_system_info()
     exec_name = download_cloudflare_speedtest(os_type, arch_type)
-    
+
     # 构建测速命令
     if sys.platform == "win32":
         cmd = [exec_name]
     else:
         cmd = [f"./{exec_name}"]
-    
+
     cmd.extend([
         "-f", ip_file,
+        "-n", "50",
         "-dn", dn_count,
         "-sl", speed_limit,
         "-tl", time_limit,
         "-o", "result.csv"
     ])
-    
+
     print(f"\n运行命令: {' '.join(cmd)}")
     print("=" * 50)
-    
+
     # 运行测速
     result = subprocess.run(cmd, encoding='utf-8', errors='replace')
-    
+
     if result.returncode == 0:
         print("\n✅ 测速完成！结果已保存到 result.csv")
         print("📊 您可以查看 result.csv 文件来了解详细的测试结果")
         print("💡 提示：结果文件中的IP按速度从快到慢排序")
-        
+
         # 询问是否上报结果
         upload_results_to_api("result.csv")
     else:
         print("\n❌ 测速失败")
-    
+
     return "ALL", dn_count, speed_limit, time_limit
 
 
 def handle_normal_mode(ip_file=CLOUDFLARE_IP_FILE):
     """处理常规测速模式
-    
+
     Args:
         ip_file: 要使用的IP文件路径
     """
     print("\n开始检测可用地区...")
     print("正在使用HTTPing模式检测各地区可用性...")
-    
+
     # 先运行一次HTTPing检测，获取可用地区
     available_regions = detect_available_regions()
-    
+
     if not available_regions:
         print("❌ 未检测到可用地区，请检查网络连接")
         return None
-    
+
     print(f"\n检测到 {len(available_regions)} 个可用地区:")
     for i, (region_code, region_name, count) in enumerate(available_regions, 1):
         print(f"  {i}. {region_code} - {region_name} (可用{count}个IP)")
-    
+
     # 让用户选择地区
     while True:
         try:
@@ -1263,10 +1264,10 @@ def handle_normal_mode(ip_file=CLOUDFLARE_IP_FILE):
                 print(f"✗ 请输入 1-{len(available_regions)} 之间的数字")
         except ValueError:
             print("✗ 请输入有效的数字")
-    
+
     # 显示预设配置选项
     display_preset_configs()
-    
+
     # 获取配置选择
     while True:
         config_choice = input("\n请选择配置 [1-4]: ").strip()
@@ -1307,13 +1308,13 @@ def handle_normal_mode(ip_file=CLOUDFLARE_IP_FILE):
                     break
                 except ValueError:
                     print("✗ 请输入有效的数字")
-            
+
             # 获取下载速度下限
             while True:
                 speed_limit = input("请输入下载速度下限 (MB/s) [默认: 1]: ").strip()
                 if not speed_limit:
                     speed_limit = "1"
-                
+
                 try:
                     speed_limit_float = float(speed_limit)
                     if speed_limit_float < 0:
@@ -1327,13 +1328,13 @@ def handle_normal_mode(ip_file=CLOUDFLARE_IP_FILE):
                     break
                 except ValueError:
                     print("✗ 请输入有效的数字")
-            
+
             # 获取延迟阈值
             while True:
                 time_limit = input("请输入延迟阈值 (ms) [默认: 1000]: ").strip()
                 if not time_limit:
                     time_limit = "1000"
-                
+
                 try:
                     time_limit_int = int(time_limit)
                     if time_limit_int <= 0:
@@ -1347,19 +1348,19 @@ def handle_normal_mode(ip_file=CLOUDFLARE_IP_FILE):
                     break
                 except ValueError:
                     print("✗ 请输入有效的数字")
-            
+
             print(f"✓ 自定义配置: {dn_count}个IP, {speed_limit}MB/s, {time_limit}ms")
             break
         else:
             print("✗ 无效选择，请输入 1-4")
-    
+
     print(f"\n测速参数: 地区={cfcolo}, 测试{dn_count}个IP, 速度下限{speed_limit}MB/s, 延迟上限{time_limit}ms")
     print("模式: 常规测速（指定地区）")
-    
+
     # 从地区扫描结果中提取该地区的IP进行测速
     if os.path.exists("region_scan.csv"):
         print(f"\n正在从扫描结果中提取 {cfcolo} 地区的IP...")
-        
+
         # 读取该地区的IP
         region_ips = []
         with open("region_scan.csv", 'r', encoding='utf-8') as f:
@@ -1370,47 +1371,48 @@ def handle_normal_mode(ip_file=CLOUDFLARE_IP_FILE):
                     ip = (row.get('IP 地址') or '').strip()
                     if ip:
                         region_ips.append(ip)
-        
+
         if region_ips:
             # 创建该地区的IP文件
             region_ip_file = f"{cfcolo.lower()}_ips.txt"
             with open(region_ip_file, 'w', encoding='utf-8') as f:
                 for ip in region_ips:
                     f.write(f"{ip}\n")
-            
+
             print(f"找到 {len(region_ips)} 个 {cfcolo} 地区的IP，开始测速...")
-            
+
             # 使用该地区的IP文件进行测速
             os_type, arch_type = get_system_info()
             exec_name = download_cloudflare_speedtest(os_type, arch_type)
-            
+
             # 构建测速命令
             if sys.platform == "win32":
                 cmd = [exec_name]
             else:
                 cmd = [f"./{exec_name}"]
-            
+
             cmd.extend([
                 "-f", region_ip_file,
+                "-n", "50",
                 "-dn", dn_count,
                 "-sl", speed_limit,
                 "-tl", time_limit,
                 "-o", "result.csv"
             ])
-            
+
             print(f"\n运行命令: {' '.join(cmd)}")
             print("=" * 50)
-            
+
             # 运行测速
             result = subprocess.run(cmd, encoding='utf-8', errors='replace')
-            
+
             # 清理临时文件
             if os.path.exists(region_ip_file):
                 os.remove(region_ip_file)
-            
+
             if result.returncode == 0:
                 print("\n✅ 测速完成！结果已保存到 result.csv")
-                
+
                 # 询问是否上报结果
                 upload_results_to_api("result.csv")
             else:
@@ -1419,7 +1421,7 @@ def handle_normal_mode(ip_file=CLOUDFLARE_IP_FILE):
             print(f"❌ 未找到 {cfcolo} 地区的IP")
     else:
         print("❌ 未找到地区扫描结果文件")
-    
+
     return cfcolo, dn_count, speed_limit, time_limit
 
 
@@ -1428,28 +1430,28 @@ def generate_proxy_list(result_file="result.csv", output_file="ips_ports.txt"):
     if not os.path.exists(result_file):
         print(f"未找到测速结果文件: {result_file}")
         return False
-    
+
     try:
         import csv
-        
+
         print(f"\n正在生成反代IP列表...")
-        
+
         # 读取CSV文件
         with open(result_file, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             rows = list(reader)
-        
+
         if not rows:
             print("测速结果文件为空")
             return False
-        
+
         # 生成反代IP列表
         proxy_ips = []
         for row in rows:
             # 查找IP和端口列
             ip = None
             port = None
-            
+
             # 查找IP列
             for key in row.keys():
                 if 'ip' in key.lower() and '地址' in key and row[key] is not None:
@@ -1458,7 +1460,7 @@ def generate_proxy_list(result_file="result.csv", output_file="ips_ports.txt"):
                 elif key.lower() == 'ip' and row[key] is not None:
                     ip = str(row[key]).strip()
                     break
-            
+
             # 查找端口列
             for key in row.keys():
                 if '端口' in key and row[key] is not None:
@@ -1467,7 +1469,7 @@ def generate_proxy_list(result_file="result.csv", output_file="ips_ports.txt"):
                 elif key.lower() == 'port' and row[key] is not None:
                     port = str(row[key]).strip()
                     break
-            
+
             # 如果IP地址中包含端口信息（如 1.2.3.4:443），提取端口
             if ip and ':' in ip:
                 ip_parts = ip.split(':')
@@ -1475,23 +1477,23 @@ def generate_proxy_list(result_file="result.csv", output_file="ips_ports.txt"):
                     ip = ip_parts[0]  # 提取纯IP地址
                     if not port:  # 如果还没有找到端口，使用IP中的端口
                         port = ip_parts[1]
-            
+
             # 如果没有找到端口，使用默认值
             if not port:
                 port = '443'
-            
+
             if ip and port:
                 proxy_ips.append(f"{ip}:{port}")
-        
+
         # 保存到文件
         with open(output_file, 'w', encoding='utf-8') as f:
             for proxy in proxy_ips:
                 f.write(proxy + '\n')
-        
+
         print(f"反代IP列表已生成: {output_file}")
         print(f"共生成 {len(proxy_ips)} 个反代IP")
         print(f"📝 格式: IP:端口 (如: 1.2.3.4:443)")
-        
+
         # 显示前10个IP作为示例
         if proxy_ips:
             print(f"\n前10个反代IP示例:")
@@ -1499,9 +1501,9 @@ def generate_proxy_list(result_file="result.csv", output_file="ips_ports.txt"):
                 print(f"  {i:2d}. {proxy}")
             if len(proxy_ips) > 10:
                 print(f"  ... 还有 {len(proxy_ips) - 10} 个IP")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"生成反代IP列表失败: {e}")
         return False
@@ -1513,7 +1515,7 @@ def run_speedtest_with_file(ip_file, dn_count, speed_limit, time_limit):
         # 获取系统信息
         os_type, arch_type = get_system_info()
         exec_name = download_cloudflare_speedtest(os_type, arch_type)
-        
+
         # 构建命令（反代模式使用TCPing，专注于端口信息）
         cmd = [
             f"./{exec_name}",
@@ -1523,24 +1525,24 @@ def run_speedtest_with_file(ip_file, dn_count, speed_limit, time_limit):
             "-tl", time_limit,
             "-p", "20"  # 显示前20个结果
         ]
-        
+
         print(f"\n运行命令: {' '.join(cmd)}")
         print("=" * 50)
-        
+
         # 运行测速 - 实时显示输出
         print("正在运行测速，请稍候...")
         result = subprocess.run(cmd, text=True, encoding='utf-8', errors='replace')
-        
+
         if result.returncode == 0:
             print("\n测速完成！")
             print("结果已保存到 result.csv")
         else:
             print(f"\n测速失败，返回码: {result.returncode}")
-        
+
         # 等待用户按键，不自动关闭窗口
         input("\n按回车键退出...")
         return 0
-        
+
     except Exception as e:
         print(f"运行测速失败: {e}")
         return 1
@@ -1555,20 +1557,20 @@ def run_speedtest(exec_name, cfcolo, dn_count, speed_limit, time_limit):
     print(f"  - 下载速度阈值: {speed_limit} MB/s")
     print(f"  - 延迟阈值: {time_limit} ms")
     print("-" * 50)
-    
+
     # 构建命令
     if sys.platform == "win32":
         cmd = [exec_name]
     else:
         cmd = [f"./{exec_name}"]
-    
+
     cmd.extend([
         "-dn", dn_count,
         "-sl", speed_limit,
         "-tl", time_limit,
         "-f", CLOUDFLARE_IP_FILE
     ])
-    
+
     try:
         result = subprocess.run(cmd, check=True)
         print("\nCloudflareSpeedTest 任务完成！")
@@ -1591,7 +1593,7 @@ def main():
             sys.stderr = codecs.getwriter('utf-8')(sys.stderr.detach())
         except:
             pass
-    
+
     print("=" * 80)
     print(" Cloudflare SpeedTest 跨平台自动化脚本")
     print("=" * 80)
@@ -1600,30 +1602,30 @@ def main():
     print(" 支持单个/多机场码/地区优选测速")
     print(" 支持优选反代IP列表生成")
     print("=" * 80)
-    
+
     # 获取系统信息
     os_type, arch_type = get_system_info()
     print(f"\n[系统信息]")
     print(f"  操作系统: {os_type}")
     print(f"  架构类型: {arch_type}")
     print(f"  Python版本: {sys.version.split()[0]}")
-    
+
     # 加载本地机场码配置（如果存在）
     print(f"\n[配置加载]")
     load_local_airport_codes()
-    
+
     # 下载 CloudflareSpeedTest
     print(f"\n[程序准备]")
     exec_name = download_cloudflare_speedtest(os_type, arch_type)
-    
+
     # 选择 IP 版本
     ip_version, ip_file = select_ip_version()
-    
+
     # 下载或生成 Cloudflare IP 列表
     if not download_cloudflare_ips(ip_version, ip_file):
         print("❌ 准备IP列表失败")
         return 1
-    
+
     # 获取用户输入
     print(f"\n[参数配置]")
     print("=" * 60)
@@ -1633,7 +1635,7 @@ def main():
     print(" Telegram交流群: https://t.me/+ft-zI76oovgwNmRh")
     print("=" * 60)
     result = get_user_input(ip_file)
-    
+
     # 检查是否是优选反代模式
     if result == (None, None, None, None):
         print("\n优选反代功能已完成，程序退出")
@@ -1642,17 +1644,17 @@ def main():
             print("\n" + "=" * 60)
             input("按 Enter 键退出...")
         return 0
-    
+
     cfcolo, dn_count, speed_limit, time_limit = result
-    
+
     # 常规测速模式已经在handle_normal_mode中完成测速
     print(f"\n常规测速已完成")
-    
+
     # Windows 系统添加暂停，避免窗口立即关闭
     if sys.platform == "win32":
         print("\n" + "=" * 60)
         input("按 Enter 键退出...")
-    
+
     return 0
 
 
@@ -1705,29 +1707,29 @@ def upload_results_to_api(result_file="result.csv"):
     print(" 此功能可以将测速结果上报到您的 Cloudflare Workers API")
     print(" 需要提供您的 Worker 域名和 UUID")
     print("=" * 70)
-    
+
     # 询问是否上报
     choice = input("\n是否要上报优选结果？[y/N]: ").strip().lower()
     if choice not in ['y', 'yes']:
         print("跳过上报")
         return
-    
+
     # 检查结果文件是否存在
     if not os.path.exists(result_file):
         print(f"❌ 未找到测速结果文件: {result_file}")
         print("请先完成测速后再上报结果")
         return
-    
+
     # 尝试加载保存的配置
     saved_config = load_config()
     worker_domain = None
     uuid = None
-    
+
     if saved_config:
         saved_domain = saved_config.get('worker_domain', '')
         saved_uuid = saved_config.get('uuid', '')
         last_used = saved_config.get('last_used', '未知')
-        
+
         print(f"\n💾 检测到上次使用的配置:")
         print(f"   Worker 域名: {saved_domain}")
         print(f"   UUID: {saved_uuid}")
@@ -1736,7 +1738,7 @@ def upload_results_to_api(result_file="result.csv"):
         print("  1. 是 - 使用上次配置")
         print("  2. 否 - 输入新的URL")
         print("  3. 清除配置 - 删除保存的配置")
-        
+
         while True:
             config_choice = input("\n请选择 [1/2/3]: ").strip()
             if config_choice == "1":
@@ -1757,57 +1759,57 @@ def upload_results_to_api(result_file="result.csv"):
                 break
             else:
                 print("✗ 请输入 1、2 或 3")
-    
+
     # 如果没有使用保存的配置，则获取新的URL
     if not worker_domain or not uuid:
         # 获取管理页面 URL
         print("\n📝 请输入您的 Worker 管理页面 URL")
         print("示例: https://你的域名/你的UUID")
         print("提示: 直接复制浏览器地址栏的完整URL即可")
-        
+
         management_url = input("\n管理页面 URL: ").strip()
         if not management_url:
             print("❌ URL 不能为空")
             return
-    
+
         # 解析 URL，提取域名和 UUID
         try:
             import re
             from urllib.parse import urlparse
-            
+
             # 移除可能的协议前缀和尾部斜杠
             management_url = management_url.strip().rstrip('/')
-            
+
             # 如果没有协议前缀，添加 https://
             if not management_url.startswith(('http://', 'https://')):
                 management_url = 'https://' + management_url
-            
+
             # 解析 URL
             parsed = urlparse(management_url)
             worker_domain = parsed.netloc
-            
+
             # 从路径中提取 UUID
             # UUID 格式：8-4-4-4-12 (例如: 351c9981-04b6-4103-aa4b-864aa9c91469)
             uuid_pattern = r'([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})'
             uuid_match = re.search(uuid_pattern, parsed.path, re.IGNORECASE)
-            
+
             if not worker_domain:
                 print("❌ 无法解析域名，请检查 URL 格式")
                 return
-            
+
             if not uuid_match:
                 print("❌ 无法从 URL 中提取 UUID")
                 print("   请确保 URL 包含完整的 UUID")
                 print("   格式示例: https://域名/UUID")
                 return
-            
+
             uuid = uuid_match.group(1)
-            
+
             # 显示解析结果
             print(f"\n✅ 成功解析配置:")
             print(f"   Worker 域名: {worker_domain}")
             print(f"   UUID: {uuid}")
-            
+
             # 询问是否保存配置
             save_choice = input("\n是否保存此配置供下次使用？[Y/n]: ").strip().lower()
             if save_choice not in ['n', 'no']:
@@ -1815,15 +1817,15 @@ def upload_results_to_api(result_file="result.csv"):
                     print("✅ 配置已保存")
                 else:
                     print("⚠️  配置保存失败，但不影响本次上报")
-            
+
         except Exception as e:
             print(f"❌ URL 解析失败: {e}")
             print("   请检查 URL 格式是否正确")
             return
-    
+
     # 构建 API URL
     api_url = f"https://{worker_domain}/{uuid}/api/preferred-ips"
-    
+
     # 检查是否已有数据
     print("\n🔍 正在检查现有优选IP...")
     try:
@@ -1835,7 +1837,7 @@ def upload_results_to_api(result_file="result.csv"):
                 response = curl_request(api_url, method='GET', timeout=10)
             else:
                 raise
-        
+
         if response.status_code == 200:
             result = response.json()
             existing_count = result.get('count', 0)
@@ -1844,7 +1846,7 @@ def upload_results_to_api(result_file="result.csv"):
                 print("\n是否要清空现有数据后再添加新的？")
                 print("  1. 是 - 清空后添加（推荐，避免重复）")
                 print("  2. 否 - 直接添加（可能有重复提示）")
-                
+
                 while True:
                     clear_choice = input("\n请选择 [1/2]: ").strip()
                     if clear_choice == "1":
@@ -1867,7 +1869,7 @@ def upload_results_to_api(result_file="result.csv"):
         should_clear = False
         print(f"⚠️  检查现有数据失败: {e}")
         print("将继续尝试添加...")
-    
+
     # 读取测速结果
     print("\n📊 正在读取测速结果...")
     try:
@@ -1878,24 +1880,24 @@ def upload_results_to_api(result_file="result.csv"):
                 # 安全获取数据，避免NoneType错误
                 ip = (row.get('IP 地址') or '').strip()
                 port = (row.get('端口') or '').strip()
-                
+
                 # 尝试多种可能的列名来获取速度
                 speed = ''
                 for speed_key in ['下载速度(MB/s)', '下载速度 (MB/s)', '下载速度']:
                     if speed_key in row and row[speed_key] is not None:
                         speed = str(row[speed_key]).strip()
                         break
-                
+
                 # 尝试多种可能的列名来获取延迟
                 latency = ''
                 for latency_key in ['平均延迟', '延迟', 'latency']:
                     if latency_key in row and row[latency_key] is not None:
                         latency = str(row[latency_key]).strip()
                         break
-                
+
                 # 获取地区码
                 region_code = (row.get('地区码') or '').strip()
-                
+
                 # 如果IP地址中包含端口信息
                 if ip and ':' in ip:
                     ip_parts = ip.split(':')
@@ -1903,23 +1905,23 @@ def upload_results_to_api(result_file="result.csv"):
                         ip = ip_parts[0]
                         if not port:
                             port = ip_parts[1]
-                
+
                 # 设置默认端口
                 if not port:
                     port = '443'
-                
+
                 if ip:
                     try:
                         speed_val = float(speed) if speed else 0
                         latency_val = latency if latency else 'N/A'
-                        
+
                         # 获取地区中文名称
                         region_name = '未知地区'
                         if region_code and region_code in AIRPORT_CODES:
                             region_name = AIRPORT_CODES[region_code].get('name', region_code)
                         elif region_code:
                             region_name = region_code
-                        
+
                         best_ips.append({
                             'ip': ip,
                             'port': int(port),
@@ -1930,13 +1932,13 @@ def upload_results_to_api(result_file="result.csv"):
                         })
                     except ValueError:
                         continue
-        
+
         if not best_ips:
             print("❌ 未找到有效的测速结果")
             return
-        
+
         print(f"✅ 找到 {len(best_ips)} 个测速结果")
-        
+
         # 询问要上报多少个结果
         while True:
             count_input = input(f"\n请输入要上报的IP数量 [默认: 10, 最多: {len(best_ips)}]: ").strip()
@@ -1954,7 +1956,7 @@ def upload_results_to_api(result_file="result.csv"):
                 break
             except ValueError:
                 print("✗ 请输入有效的数字")
-        
+
         # 显示将要上报的IP
         print(f"\n将上报以下 {upload_count} 个优选IP:")
         print("-" * 70)
@@ -1962,13 +1964,13 @@ def upload_results_to_api(result_file="result.csv"):
             region_display = f"{ip_info['region_name']}" if ip_info.get('region_name') else '未知地区'
             print(f"  {i:2d}. {ip_info['ip']:15s}:{ip_info['port']:<5d} - {ip_info['speed']:.2f} MB/s - {region_display} - 延迟: {ip_info['latency']}")
         print("-" * 70)
-        
+
         # 确认上报
         confirm = input("\n确认上报以上IP？[Y/n]: ").strip().lower()
         if confirm in ['n', 'no']:
             print("取消上报")
             return
-        
+
         # 如果需要清空，先执行清空操作
         if should_clear:
             print("\n🗑️  正在清空现有数据...")
@@ -1992,14 +1994,14 @@ def upload_results_to_api(result_file="result.csv"):
                         )
                     else:
                         raise
-                
+
                 if delete_response.status_code == 200:
                     print("✅ 现有数据已清空")
                 else:
                     print(f"⚠️  清空失败 (HTTP {delete_response.status_code})，继续尝试添加...")
             except Exception as e:
                 print(f"⚠️  清空操作失败: {e}，继续尝试添加...")
-        
+
         # 构建批量上报数据
         print("\n🚀 开始批量上报优选IP...")
         batch_data = []
@@ -2008,20 +2010,20 @@ def upload_results_to_api(result_file="result.csv"):
             region_name = ip_info.get('region_name', '未知地区')
             speed = ip_info['speed']
             name = f"{region_name}-{speed:.2f}MB/s"
-            
+
             batch_data.append({
                 "ip": ip_info['ip'],
                 "port": ip_info['port'],
                 "name": name
             })
-        
+
         # 发送批量POST请求
         use_curl_fallback = False
         response = None
         success_count = 0
         fail_count = 0
         skipped_count = 0
-        
+
         try:
             try:
                 response = requests.post(
@@ -2043,7 +2045,7 @@ def upload_results_to_api(result_file="result.csv"):
                     )
                 else:
                     raise
-            
+
             # 处理响应
             if response and response.status_code == 200:
                 result = response.json()
@@ -2051,7 +2053,7 @@ def upload_results_to_api(result_file="result.csv"):
                     success_count = result.get('added', 0)
                     fail_count = result.get('failed', 0)
                     skipped_count = result.get('skipped', 0)
-                    
+
                     print("✅ 批量上报完成！")
                     print(f"   成功添加: {success_count} 个")
                     if skipped_count > 0:
@@ -2074,7 +2076,7 @@ def upload_results_to_api(result_file="result.csv"):
                 except:
                     pass
                 fail_count = upload_count
-                
+
         except requests.exceptions.Timeout:
             print(f"❌ 请求超时，请检查网络连接")
             print(f"   建议：检查网络连接或稍后重试")
@@ -2087,7 +2089,7 @@ def upload_results_to_api(result_file="result.csv"):
             print(f"❌ 请求失败: {e}")
             print(f"   建议：检查配置是否正确，或联系技术支持")
             fail_count = upload_count
-        
+
         # 显示统计信息
         print("\n" + "=" * 70)
         print(" 批量上报完成！")
@@ -2099,13 +2101,13 @@ def upload_results_to_api(result_file="result.csv"):
             print(f"  ❌ 失败: {fail_count} 个")
         print(f"  📊 总计: {upload_count} 个")
         print("=" * 70)
-        
+
         if success_count > 0:
             print(f"\n💡 提示:")
             print(f"   - 您可以访问 https://{worker_domain}/{uuid} 查看管理页面")
             print(f"   - 优选IP已添加，订阅生成时会自动使用")
             print(f"   - 批量上报速度更快，避免了逐个请求的超时问题")
-        
+
     except Exception as e:
         print(f"❌ 读取测速结果失败: {e}")
         import traceback
@@ -2123,14 +2125,14 @@ def detect_available_regions():
             # 直接读取已有文件
             available_regions = []
             region_counts = {}
-            
+
             with open("region_scan.csv", 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
                     colo = (row.get('地区码') or '').strip()
                     if colo and colo != 'N/A':
                         region_counts[colo] = region_counts.get(colo, 0) + 1
-            
+
             # 构建地区列表（按IP数量排序）
             for colo, count in sorted(region_counts.items(), key=lambda x: x[1], reverse=True):
                 region_name = "未知地区"
@@ -2139,43 +2141,46 @@ def detect_available_regions():
                         region_name = f"{info.get('name', '')} ({info.get('country', '')})"
                         break
                 available_regions.append((colo, region_name, count))
-            
+
             return available_regions
-    
+
     print("正在检测各地区可用性...")
-    
+
     # 获取系统信息
     os_type, arch_type = get_system_info()
     exec_name = download_cloudflare_speedtest(os_type, arch_type)
-    
+
     # 构建检测命令 - 使用HTTPing模式快速检测
     if sys.platform == "win32":
         cmd = [exec_name]
     else:
         cmd = [f"./{exec_name}"]
-    
+
     cmd.extend([
         "-dd",  # 禁用下载测速，只做延迟测试
         "-tl", "9999",  # 高延迟阈值
         "-f", CLOUDFLARE_IP_FILE,
         "-httping",  # 使用HTTPing模式获取地区码
+        # 注意：HTTPing 本质上也算一种 网络扫描 行为，因此如果你在服务器上面运行，需要降低并发(-n)，否则可能会被一些严格的商家暂停服务。
+        # 如果你遇到 HTTPing 首次测速可用 IP 数量正常，后续测速越来越少甚至直接为 0，但停一段时间后又恢复了的情况，那么也可能是被 运营商、Cloudflare CDN 认为你在网络扫描而 触发临时限制机制，因此才会过一会儿就恢复了，建议降低并发(-n)减少这种情况的发生
+        "-n", "50",
         "-url", "https://jhb.ovh",
         "-o", "region_scan.csv"  # 输出到地区扫描文件
     ])
-    
+
     try:
         print("运行地区检测...")
         print("正在扫描所有地区，请稍候（约需1-2分钟）...")
         print("=" * 50)
-        
+
         # 直接运行命令，显示完整输出
         result = subprocess.run(cmd, timeout=120, encoding='utf-8', errors='replace')
-        
+
         if result.returncode == 0 and os.path.exists("region_scan.csv"):
             # 读取检测结果
             available_regions = []
             region_counts = {}  # 统计每个地区的IP数量
-            
+
             with open("region_scan.csv", 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
@@ -2185,7 +2190,7 @@ def detect_available_regions():
                         if colo not in region_counts:
                             region_counts[colo] = 0
                         region_counts[colo] += 1
-            
+
             # 构建地区列表（按IP数量排序）
             for colo, count in sorted(region_counts.items(), key=lambda x: x[1], reverse=True):
                 # 查找地区名称
@@ -2195,10 +2200,10 @@ def detect_available_regions():
                         region_name = f"{info.get('name', '')} ({info.get('country', '')})"
                         break
                 available_regions.append((colo, region_name, count))
-            
+
             # 保留地区扫描结果文件，不删除
             print("地区扫描结果已保存到 region_scan.csv")
-            
+
             return available_regions
         else:
             print("地区检测失败，使用默认地区列表")
@@ -2213,7 +2218,7 @@ def detect_available_regions():
                 ('LHR', '伦敦 (英国)', 0)
             ]
             return default_regions
-            
+
     except Exception as e:
         print(f"地区检测出错: {e}")
         # 返回默认地区

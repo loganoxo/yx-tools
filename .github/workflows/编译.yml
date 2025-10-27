@@ -35,6 +35,12 @@ jobs:
             arch: arm64
             ext: ''
 
+          # Linux arm64
+          - os: ubuntu-22.04-arm
+            platform: linux
+            arch: arm64
+            ext: ''
+
           # macOS Intel
 #          - os: macos-13
 #            platform: macos

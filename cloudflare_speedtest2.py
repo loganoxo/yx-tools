@@ -1203,7 +1203,7 @@ def handle_beginner_mode(ip_file=CLOUDFLARE_IP_FILE):
 
     cmd.extend([
         "-f", ip_file,
-        "-n", "50",
+        "-n", "100",
         "-dn", dn_count,
         "-sl", speed_limit,
         "-tl", time_limit,
@@ -1393,7 +1393,7 @@ def handle_normal_mode(ip_file=CLOUDFLARE_IP_FILE):
 
             cmd.extend([
                 "-f", region_ip_file,
-                "-n", "50",
+                "-n", "100",
                 "-dn", dn_count,
                 "-sl", speed_limit,
                 "-tl", time_limit,
@@ -1595,7 +1595,7 @@ def main():
             pass
 
     print("=" * 80)
-    print(" Cloudflare SpeedTest 跨平台自动化脚本 自用 v2.4.2 ")
+    print(" Cloudflare SpeedTest 跨平台自动化脚本 自用 v2.4.3 ")
     print("=" * 80)
     print(" 支持 Windows / Linux / macOS (Darwin)")
     print(f" 内置 {len(AIRPORT_CODES)} 个全球数据中心机场码")
@@ -2163,7 +2163,7 @@ def detect_available_regions():
         "-httping",  # 使用HTTPing模式获取地区码
         # 注意：HTTPing 本质上也算一种 网络扫描 行为，因此如果你在服务器上面运行，需要降低并发(-n)，否则可能会被一些严格的商家暂停服务。
         # 如果你遇到 HTTPing 首次测速可用 IP 数量正常，后续测速越来越少甚至直接为 0，但停一段时间后又恢复了的情况，那么也可能是被 运营商、Cloudflare CDN 认为你在网络扫描而 触发临时限制机制，因此才会过一会儿就恢复了，建议降低并发(-n)减少这种情况的发生
-        "-n", "50",
+        "-n", "100",
         "-url", "https://jhb.ovh",
         "-o", "region_scan.csv"  # 输出到地区扫描文件
     ])
@@ -2174,7 +2174,7 @@ def detect_available_regions():
         print("=" * 50)
 
         # 直接运行命令，显示完整输出
-        result = subprocess.run(cmd, timeout=120, encoding='utf-8', errors='replace')
+        result = subprocess.run(cmd, timeout=1200, encoding='utf-8', errors='replace')
 
         if result.returncode == 0 and os.path.exists("region_scan.csv"):
             # 读取检测结果

@@ -1,9 +1,9 @@
 name: Build All Platforms
-# 设置Linux为arm64也没什么用,github不支持
 on:
+  # Runs on pushes targeting the default branch
   push:
-    tags:
-      - 'v*'  # 当推送 v1.0.0 这样的 tag 时触发
+    branches:
+      - mine
   workflow_dispatch:  # 也支持手动触发
 
 
@@ -30,7 +30,8 @@ jobs:
 #            arch: amd64
 #            ext: ''
 
-          - os: ubuntu-latest
+          # Linux arm64
+          - os: ubuntu-24.04-arm
             platform: linux
             arch: arm64
             ext: ''

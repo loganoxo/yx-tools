@@ -1595,7 +1595,7 @@ def main():
             pass
 
     print("=" * 80)
-    print(" Cloudflare SpeedTest 跨平台自动化脚本 v2.4.1")
+    print(" Cloudflare SpeedTest 跨平台自动化脚本 自用 v2.4.1 ")
     print("=" * 80)
     print(" 支持 Windows / Linux / macOS (Darwin)")
     print(f" 内置 {len(AIRPORT_CODES)} 个全球数据中心机场码")

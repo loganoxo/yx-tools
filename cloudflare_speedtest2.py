@@ -1595,7 +1595,7 @@ def main():
             pass
 
     print("=" * 80)
-    print(" Cloudflare SpeedTest 跨平台自动化脚本 自用 v2.4.3 ")
+    print(" Cloudflare SpeedTest 跨平台自动化脚本 自用 v2.4.4 ")
     print("=" * 80)
     print(" 支持 Windows / Linux / macOS (Darwin)")
     print(f" 内置 {len(AIRPORT_CODES)} 个全球数据中心机场码")
@@ -1705,7 +1705,7 @@ def upload_results_to_api(result_file="result.csv"):
     print(" 优选结果上报功能")
     print("=" * 70)
     print(" 此功能可以将测速结果上报到您的 Cloudflare Workers API")
-    print(" 需要提供您的 Worker 域名和 UUID")
+    print(" 需要提供您的 Worker 域名和 UUID或者路径")
     print("=" * 70)
 
     # 询问是否上报
@@ -1732,7 +1732,7 @@ def upload_results_to_api(result_file="result.csv"):
 
         print(f"\n💾 检测到上次使用的配置:")
         print(f"   Worker 域名: {saved_domain}")
-        print(f"   UUID: {saved_uuid}")
+        print(f"   UUID或者路径: {saved_uuid}")
         print(f"   上次使用: {last_used}")
         print("\n是否使用上次的配置？")
         print("  1. 是 - 使用上次配置")
@@ -1746,7 +1746,7 @@ def upload_results_to_api(result_file="result.csv"):
                 uuid = saved_uuid
                 print(f"\n✅ 使用保存的配置")
                 print(f"   Worker 域名: {worker_domain}")
-                print(f"   UUID: {uuid}")
+                print(f"   UUID或者路径: {uuid}")
                 # 更新最后使用时间
                 save_config(worker_domain, uuid)
                 break
@@ -1764,7 +1764,7 @@ def upload_results_to_api(result_file="result.csv"):
     if not worker_domain or not uuid:
         # 获取管理页面 URL
         print("\n📝 请输入您的 Worker 管理页面 URL")
-        print("示例: https://你的域名/你的UUID")
+        print("示例: https://你的域名/你的UUID或者路径")
         print("提示: 直接复制浏览器地址栏的完整URL即可")
 
         management_url = input("\n管理页面 URL: ").strip()
@@ -1774,7 +1774,6 @@ def upload_results_to_api(result_file="result.csv"):
 
         # 解析 URL，提取域名和 UUID
         try:
-            import re
             from urllib.parse import urlparse
 
             # 移除可能的协议前缀和尾部斜杠
@@ -1788,27 +1787,25 @@ def upload_results_to_api(result_file="result.csv"):
             parsed = urlparse(management_url)
             worker_domain = parsed.netloc
 
-            # 从路径中提取 UUID
-            # UUID 格式：8-4-4-4-12 (例如: 351c9981-04b6-4103-aa4b-864aa9c91469)
-            uuid_pattern = r'([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})'
-            uuid_match = re.search(uuid_pattern, parsed.path, re.IGNORECASE)
-
+            # 从路径中提取 UUID（不再验证格式）
             if not worker_domain:
                 print("❌ 无法解析域名，请检查 URL 格式")
                 return
 
-            if not uuid_match:
-                print("❌ 无法从 URL 中提取 UUID")
-                print("   请确保 URL 包含完整的 UUID")
-                print("   格式示例: https://域名/UUID")
+            # 从路径中提取最后一个非空部分作为UUID
+            path_parts = [p for p in parsed.path.strip('/').split('/') if p]
+            if not path_parts:
+                print("❌ 无法从 URL 中提取 UUID或者路径")
+                print("   请确保 URL 包含 UUID或者路径")
+                print("   格式示例: https://域名/UUID或者路径")
                 return
 
-            uuid = uuid_match.group(1)
+            uuid = path_parts[-1]
 
             # 显示解析结果
             print(f"\n✅ 成功解析配置:")
             print(f"   Worker 域名: {worker_domain}")
-            print(f"   UUID: {uuid}")
+            print(f"   UUID或者路径: {uuid}")
 
             # 询问是否保存配置
             save_choice = input("\n是否保存此配置供下次使用？[Y/n]: ").strip().lower()
